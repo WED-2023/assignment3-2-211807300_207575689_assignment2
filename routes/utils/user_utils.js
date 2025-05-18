@@ -9,6 +9,14 @@ async function getFavoriteRecipes(user_id){
     return recipes_id;
 }
 
+async function removeFromFavorites(user_id, recipe_id) {
+  await DButils.execQuery(
+    `DELETE FROM favorite_recipes WHERE user_id = ${user_id} AND recipe_id = '${recipe_id}'`
+  );
+}
+
+exports.removeFromFavorites = removeFromFavorites;
+
 
 
 exports.markAsFavorite = markAsFavorite;

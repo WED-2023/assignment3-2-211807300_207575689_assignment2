@@ -6,39 +6,71 @@ const bcrypt = require("bcrypt");
 
 router.post("/Register", async (req, res, next) => {
   try {
-    // parameters exists
-    // valid parameters
-    // username exists
     let user_details = {
       username: req.body.username,
-      firstname: req.body.firstname,
-      lastname: req.body.lastname,
+      first_name: req.body.first_name,
+      last_name: req.body.last_name,
       country: req.body.country,
       password: req.body.password,
+      confirm_password: req.body.confirm_password,
       email: req.body.email,
       profilePic: req.body.profilePic
+    };
+  
+    
+    // validate username
+    if (
+      user_details.username.length < 3 ||
+      user_details.username.length > 8 ||
+      !/^[A-Za-z]+$/.test(user_details.username)
+    ) {
+      return res.status(400).send("Username must be 3–8 English letters only.");
     }
-    let users = [];
-    users = await DButils.execQuery("SELECT username from users");
+    
+    if (!user_details.username || !user_details.first_name || !user_details.last_name || !user_details.country || !user_details.password || !user_details.confirm_password || !user_details.email) {
+        return res.status(400).send("Details missing!");
+    }
 
-    if (users.find((x) => x.username === user_details.username))
+    // validate password match
+    if (user_details.password !== user_details.confirm_password) {
+      return res.status(400).send("Passwords do not match.");
+    }
+
+    // validate email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(user_details.email)) {
+      return res.status(400).send("Invalid email address.");
+    }
+
+    // validate password strength
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{5,10}$/;
+    if (!passwordRegex.test(user_details.password)) {
+      return res.status(400).send("Password must be 5–10 characters, and include uppercase, lowercase, number, and special character.");
+    }
+
+    // check if username taken
+    const users = await DButils.execQuery("SELECT username FROM users");
+    if (users.find((x) => x.username === user_details.username)) {
       throw { status: 409, message: "Username taken" };
+    }
 
-    // add the new username
+    // hash password and insert
     let hash_password = bcrypt.hashSync(
       user_details.password,
       parseInt(process.env.bcrypt_saltRounds)
     );
 
     await DButils.execQuery(
-      `INSERT INTO users (username, firstname, lastname, country, password, email, profilePic) VALUES ('${user_details.username}', '${user_details.firstname}', '${user_details.lastname}',
-      '${user_details.country}', '${hash_password}', '${user_details.email}', '${user_details.profilePic}')`
+      `INSERT INTO users (username, first_name, last_name, country, password, email, profilePic)
+       VALUES ('${user_details.username}', '${user_details.first_name}', '${user_details.last_name}', '${user_details.country}', '${hash_password}', '${user_details.email}', '${user_details.profilePic}')`
     );
+
     res.status(201).send({ message: "user created", success: true });
   } catch (error) {
     next(error);
   }
 });
+
 
 router.post("/Login", async (req, res, next) => {
   try {

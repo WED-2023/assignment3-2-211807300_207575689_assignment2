@@ -1,4 +1,11 @@
 require("dotenv").config();
+console.log("Loaded env:", {
+  DB_HOST: process.env.DB_HOST,
+  DB_USER: process.env.DB_USER,
+  DB_PASSWORD: process.env.DB_PASSWORD,
+  DB_NAME: process.env.DB_NAME
+});
+
 //#region express configures
 var express = require("express");
 var path = require("path");
@@ -50,7 +57,7 @@ app.get("/",function(req,res)
 // app.use(cors(corsConfig));
 // app.options("*", cors(corsConfig));
 
-var port = process.env.PORT || "80"; //local=3000 remote=80
+var port = process.env.PORT || "3000"; //local=3000 remote=80
 //#endregion
 const user = require("./routes/user");
 const recipes = require("./routes/recipes");

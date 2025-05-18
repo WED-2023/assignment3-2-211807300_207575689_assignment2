@@ -20,6 +20,30 @@ router.use(async function (req, res, next) {
   }
 });
 
+router.get("/me", async (req, res, next) => {
+  try {
+    if (!req.session || !req.session.user_id) {
+      return res.status(401).send({ message: "User not authenticated", success: false });
+    }
+
+    const user = (
+      await DButils.execQuery(`SELECT username FROM users WHERE user_id = '${req.session.user_id}'`)
+    )[0];
+
+    if (!user) {
+      return res.status(401).send({ message: "User not authenticated", success: false });
+    }
+
+    res.status(200).send({
+      username: user.username,
+      isAuthenticated: true
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+
 
 /**
  * This path gets body with recipeId and save this recipe in the favorites list of the logged-in user
@@ -51,6 +75,36 @@ router.get('/favorites', async (req,res,next) => {
     next(error); 
   }
 });
+
+
+/**
+ * This path removes a recipe from the favorites list of the logged-in user
+ */
+router.delete('/favorites', async (req, res, next) => {
+  try {
+    const user_id = req.session.user_id;
+
+    if (!user_id) {
+      return res.status(401).send({ message: "User not authenticated" });
+    }
+
+    const recipe_id = req.body.recipeId;
+    if (!recipe_id) {
+      return res.status(400).send({ message: "Missing recipeId in request body" });
+    }
+
+    await user_utils.removeFromFavorites(user_id, recipe_id);
+    res.status(200).send({ message: "The Recipe was successfully removed from favorites" });
+  } catch (error) {
+    next(error);
+  }
+});
+
+
+
+module.exports = router;
+
+
 
 
 
