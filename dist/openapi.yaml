@@ -75,6 +75,29 @@ paths:
                 $ref: '#/components/schemas/UserInfo'
         '401':
           description: User not authenticated
+
+  /users/me/viewed/{recipeId}:
+    post:
+      tags:
+        - user
+      summary: Mark recipe as viewed
+      description: Records that the user has viewed/clicked on a specific recipe
+      parameters:
+        - name: recipeId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The ID of the recipe to mark as viewed
+      responses:
+        '200':
+          description: Recipe successfully marked as viewed
+        '400':
+          description: Invalid recipe ID
+        '401':
+          description: Unauthorized - user must be logged in
+        '404':
+          description: Recipe not found
   
   /users/me/last-watched:
     get:
@@ -91,43 +114,7 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/RecipePreview'
-                  
-  /users/me/favorites:
-    get:
-      tags:
-        - user
-      summary: Get favorite recipes of the logged-in user
-      description: Returns all recipes the user marked as favorite.
-      responses:
-        '200':
-          description: A list of favorite recipes
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/RecipePreview'
-        '401':
-          description: Unauthorized – user must be logged in
 
-  /users/me/my-recipes:
-    get:
-      tags:
-        - user
-      summary: Get user's own created recipes
-      description: Returns all recipes created by the currently logged-in user.
-      responses:
-        '200':
-          description: A list of recipes created by the user
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/RecipePreview'
-        '401':
-          description: Unauthorized – user must be logged in
-  
   /users/me/favorites/{recipeId}:
     post:
       tags:
@@ -152,31 +139,66 @@ paths:
           description: Recipe not found
         '409':
           description: Recipe already in favorites
+                  
+  /users/me/favorites:
+    get:
+      tags:
+        - user
+      summary: Get favorite recipes of the logged-in user
+      description: Returns all recipes the user marked as favorite.
+      responses:
+        '200':
+          description: A list of favorite recipes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RecipePreview'
+        '401':
+          description: Unauthorized – user must be logged in
 
-  /users/me/viewed/{recipeId}:
+  /users/me/recipes:
     post:
       tags:
         - user
-      summary: Mark recipe as viewed
-      description: Records that the user has viewed/clicked on a specific recipe
-      parameters:
-        - name: recipeId
-          in: path
-          required: true
-          schema:
-            type: string
-          description: The ID of the recipe to mark as viewed
+      summary: Create a new recipe
+      description: 
+        Allows an authenticated user to submit a new recipe.
+        The recipe will be stored in the database and shown in their personal area under "My Recipes".
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewRecipe'
+      responses:
+        '201':
+          description: Recipe created successfully
+        '400':
+          description: Invalid input data
+        '401':
+          description: Unauthorized – user must be logged in
+
+
+  /users/me/my-recipes:
+    get:
+      tags:
+        - user
+      summary: Get user's own created recipes
+      description: Returns all recipes created by the currently logged-in user.
       responses:
         '200':
-          description: Recipe successfully marked as viewed
-        '400':
-          description: Invalid recipe ID
+          description: A list of recipes created by the user
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RecipePreview'
         '401':
-          description: Unauthorized - user must be logged in
-        '404':
-          description: Recipe not found
-          
-          
+          description: Unauthorized – user must be logged in
+             
   /users/me/family-recipes:
     get:
       tags:
@@ -195,27 +217,106 @@ paths:
         '401':
           description: Unauthorized – user must be logged in
 
-  /users/me/recipes:
     post:
       tags:
         - user
-      summary: Create a new recipe
-      description: >
-        Allows an authenticated user to submit a new recipe.
-        The recipe will be stored in the database and shown in their personal area under "My Recipes".
+      summary: Create a new family recipe
+      description: 
+        Allows an authenticated user to submit a new family recipe.
+        The recipe will be stored in the database and shown in their personal area under "My family Recipes".
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/NewRecipe'
+              $ref: '#/components/schemas/FamilyRecipe'
       responses:
         '201':
-          description: Recipe created successfully
+          description: family Recipe created successfully
         '400':
           description: Invalid input data
         '401':
           description: Unauthorized – user must be logged in
+
+
+
+  /users/me/recipes/{id}/startcooking:
+    get:
+      tags:
+        - user
+      summary: Start cooking a recipe
+      description: >
+        Returns the analyzed breakdown of a recipe's instructions (including ingredients, steps, and measures)
+        when the logged-in user starts cooking.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The ID of the recipe from Spoonacular
+      responses:
+        '200':
+          description: Analyzed recipe instructions and ingredients
+          content:
+            application/json:
+              schema:
+                {
+                "type": "object",
+                "properties": {
+                  "ingredients": {
+                    "type": "array",
+                    "description": "List of ingredients used in the recipe.",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "integer",
+                          "description": "Unique ID of the ingredient."
+                        },
+                        "name": {
+                          "type": "string",
+                          "description": "Name of the ingredient."
+                        },
+                        "amount": {
+                          "type": ["number", "null"],
+                          "description": "Quantity of the ingredient (metric)."
+                        },
+                        "unit": {
+                          "type": ["string", "null"],
+                          "description": "Unit of measurement for the ingredient (e.g. 'g', 'ml', 'Tbsps')."
+                        }
+                      },
+                      "required": ["id", "name"]
+                    }
+                  },
+                  "instructions": {
+                    "type": "array",
+                    "description": "List of instructions for preparing the recipe.",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "number": {
+                          "type": "integer",
+                          "description": "Step number in the recipe."
+                        },
+                        "step": {
+                          "type": "string",
+                          "description": "Text describing the instruction step."
+                        }
+                      },
+                      "required": ["number", "step"]
+                    }
+                  }
+                },
+                "required": ["ingredients", "instructions"]
+              }  
+        '401':
+          description: Unauthorized – user must be logged in
+        '500':
+          description: Server error – Failed to fetch recipe instructions
+  
+
 
   /users/me/meal-plan:
     get:

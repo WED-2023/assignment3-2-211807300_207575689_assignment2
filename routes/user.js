@@ -76,8 +76,6 @@ router.get('/me/last-watched', async (req, res, next) => {
   }
 });
 
-
-
 // מחזיר את המועדפים של המשתמש
 router.get('/me/favorites', async (req, res, next) => {
   try {
@@ -177,6 +175,96 @@ router.post('/me/recipes', async (req, res, next) => {
     next(error);
   }
 });
+
+// מחזיר את המתכונים שנוצרו על ידי המשתמש
+router.get('/me/my-recipes', async (req, res, next) => {
+  try {
+    const user_id = req.session.user_id;
+    const recipes_id = await user_utils.getSelfRecipe(user_id);
+    let recipes_id_array = [];
+    recipes_id.map((element) => recipes_id_array.push(element.recipe_id)); //extracting the recipe ids into array
+    const results = await recipe_utils.getSelfRecipeDetails(recipes_id_array);
+    res.status(200).send(results);
+  } catch(error) {
+    next(error); 
+  }
+});
+
+// הוספת מתכון משפחתי למשתמש המחובר
+router.post('/me/family-recipes', async (req, res, next) => {
+  try {
+    const user_id = req.session.user_id;
+    
+    // וידוא שכל השדות הנדרשים קיימים
+    const { title, image, family_member, tradition, ingredients ,instructions } = req.body;
+    
+    if (!title || !image || !family_member || !tradition ||  !ingredients || !instructions ) {
+      return res.status(400).send({ message: "Missing required fields", success: false });
+    }
+    
+    // ודא שרשימת המרכיבים היא מערך
+    if (!Array.isArray(ingredients)) {
+      return res.status(400).send({ message: "Ingredients must be an array", success: false });
+    }
+    
+    // יצירת המתכון חדש
+    const recipe_id = await user_utils.createNewFamilyRecipe(user_id, {
+      title,
+      image,
+      instructions, 
+      tradition, 
+      family_member, 
+      ingredients
+    });
+    
+    res.status(201).send({ 
+      message: "Recipe created successfully", 
+      success: true,
+      recipe_id: recipe_id
+    });
+    
+  } catch(error) {
+    next(error);
+  }
+});
+
+// מחזיר את המתכונים המשפחתיים שנוצרו על ידי המשתמש
+router.get('/me/family-recipes', async (req, res, next) => {
+  try {
+    const user_id = req.session.user_id;
+    const recipes_id = await user_utils.getFamilyRecipe(user_id);
+    let recipes_id_array = [];
+    recipes_id.map((element) => recipes_id_array.push(element.id)); //extracting the recipe ids into array
+    const results = await recipe_utils.getFamilyRecipeDetails(recipes_id_array);
+    res.status(200).send(results);
+  } catch(error) {
+    next(error); 
+  }
+});
+
+// התחל לעבוד על מתכון
+// בגלל שאין צור לשמור את ההתקדמות והכפיות אז נבצע זאת בצד לקוח רק בוויזואליזציה
+router.get("/me/recipes/:id/startcooking", async (req, res, next) => {
+  try {
+    const user_id = req.session.user_id;
+    if (!user_id) {
+      return res.status(401).send({ message: "User not logged in" });
+    }
+
+    const recipeId = req.params.id;
+    const instructions = await recipe_utils.combineInstructionsWithIngredients(recipeId);
+
+    res.status(200).send({
+      recipe_id: recipeId,
+      instructions
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+
+
 
 
 module.exports = router;

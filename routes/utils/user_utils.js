@@ -42,6 +42,36 @@ async function createNewRecipe(user_id, recipeData) {
 
 }
 
+async function getSelfRecipe(user_id){
+    const recipes_id = await DButils.execQuery(`select recipe_id from my_recipes where user_id='${user_id}'`);
+    return recipes_id;
+}
+
+
+async function createNewFamilyRecipe(user_id, recipeData) {
+  try {
+    const ingredientsJson = JSON.stringify(recipeData.ingredients);
+    // מאי-- חשוב לשים לב שזה יהיה בגרשיים כפולים גדי שיאם יש גרש בפנים יעבוד
+    const result = await DButils.execQuery(
+      `INSERT INTO family_recipes (user_id, title,image,instructions, tradition, family_member, ingredients) 
+       VALUES ("${user_id}", "${recipeData.title}", "${recipeData.image}", "${recipeData.instructions}", 
+               "${recipeData.tradition}", "${recipeData.family_member}", "${ingredientsJson}")`
+    );
+
+    const recipe_id = result.insertId;
+
+    return recipe_id;
+  } catch (error) {
+    throw { status: 500, message: "Failed to create family recipe: " + error.message };
+  }
+}
+
+async function getFamilyRecipe(user_id){
+    const recipes_id = await DButils.execQuery(`select id from family_recipes where user_id='${user_id}'`);
+    return recipes_id;
+}
+
+
 /**
  * מסמן מתכון כנצפה על ידי המשתמש
  * @param {number} user_id - מזהה המשתמש
@@ -97,3 +127,6 @@ exports.markAsFavorite = markAsFavorite;
 exports.getFavoriteRecipes = getFavoriteRecipes;
 exports.markRecipeAsViewed = markRecipeAsViewed;
 exports.getLastViewedRecipes = getLastViewedRecipes;
+exports.createNewFamilyRecipe=createNewFamilyRecipe;
+exports.getSelfRecipe=getSelfRecipe;
+exports.getFamilyRecipe=getFamilyRecipe;

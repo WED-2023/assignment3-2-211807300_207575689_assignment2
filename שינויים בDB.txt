@@ -1,0 +1,5 @@
+ALTER TABLE users ADD COLUMN profilePic VARCHAR(255);
+
+ALTER TABLE my_recipes ADD COLUMN ingredients TEXT;
+
+צריך לבצע עוד שינויים בDB שימו לב
