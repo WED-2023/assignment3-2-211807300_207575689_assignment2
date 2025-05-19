@@ -11,7 +11,7 @@ paths:
   /register:
     post:
       tags:
-        - user
+        - auth
       summary: Register a new user
       description: >
         Registers a new user in the system. The username must be unique. 
@@ -29,10 +29,11 @@ paths:
           description: Invalid input (e.g. password mismatch or username too short)
         '409':
           description: Username already exists
+          
   /login:
     post:
       tags:
-        - user
+        - auth
       summary: Login user
       description: Authenticates a user using username and password. On success, the user is considered logged in.
       requestBody:
@@ -46,6 +47,18 @@ paths:
           description: Login successful
         '401':
           description: Invalid username or password
+          
+  /logout:
+    post:
+      tags:
+        - auth
+      summary: Logout user
+      description: Logs out the currently authenticated user.
+      responses:
+        '200':
+          description: Logout successful
+        '401':
+          description: User not authenticated
           
   /users/me:
     get:
@@ -182,6 +195,197 @@ paths:
         '401':
           description: Unauthorized – user must be logged in
 
+  /users/me/recipes:
+    post:
+      tags:
+        - user
+      summary: Create a new recipe
+      description: >
+        Allows an authenticated user to submit a new recipe.
+        The recipe will be stored in the database and shown in their personal area under "My Recipes".
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewRecipe'
+      responses:
+        '201':
+          description: Recipe created successfully
+        '400':
+          description: Invalid input data
+        '401':
+          description: Unauthorized – user must be logged in
+
+  /users/me/meal-plan:
+    get:
+      tags:
+        - user
+      summary: Get user's meal plan
+      description: Returns the current meal plan of the logged-in user.
+      responses:
+        '200':
+          description: The user's meal plan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MealPlan'
+        '401':
+          description: Unauthorized – user must be logged in
+          
+    post:
+      tags:
+        - user
+      summary: Add recipe to meal plan
+      description: Adds a recipe to the user's meal plan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - recipeId
+              properties:
+                recipeId:
+                  type: string
+                  description: ID of the recipe to add to the meal plan
+                position:
+                  type: integer
+                  description: Optional position in the meal plan (if not specified, added at the end)
+      responses:
+        '200':
+          description: Recipe successfully added to meal plan
+        '400':
+          description: Invalid recipe ID
+        '401':
+          description: Unauthorized - user must be logged in
+        '404':
+          description: Recipe not found
+          
+    delete:
+      tags:
+        - user
+      summary: Clear meal plan
+      description: Removes all recipes from the user's meal plan
+      responses:
+        '200':
+          description: Meal plan successfully cleared
+        '401':
+          description: Unauthorized - user must be logged in
+          
+  /users/me/meal-plan/{recipeId}:
+    delete:
+      tags:
+        - user
+      summary: Remove recipe from meal plan
+      description: Removes a specific recipe from the user's meal plan
+      parameters:
+        - name: recipeId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The ID of the recipe to remove from the meal plan
+          example: "abc123"
+      responses:
+        '200':
+          description: Recipe successfully removed from meal plan
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Recipe successfully removed from meal plan"
+                  recipeId:
+                    type: string
+                    example: "abc123"
+                  remainingRecipes:
+                    type: integer
+                    example: 2
+              examples:
+                RecipeRemoved:
+                  summary: Recipe successfully removed
+                  value:
+                    message: "Recipe successfully removed from meal plan"
+                    recipeId: "abc123"
+                    remainingRecipes: 2
+                EmptyMealPlan:
+                  summary: Last recipe removed
+                  value:
+                    message: "Recipe successfully removed from meal plan. Your meal plan is now empty."
+                    recipeId: "abc123"
+                    remainingRecipes: 0
+        '400':
+          description: Invalid recipe ID
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+              example:
+                error: "Invalid recipe ID format"
+        '401':
+          description: Unauthorized - user must be logged in
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+              example:
+                error: "Authentication required"
+        '404':
+          description: Recipe not found in meal plan
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+              example:
+                error: "Recipe not found in meal plan"
+          
+    put:
+      tags:
+        - user
+      summary: Update recipe position in meal plan
+      description: Changes the position of a recipe in the user's meal plan
+      parameters:
+        - name: recipeId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The ID of the recipe to reposition
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - position
+              properties:
+                position:
+                  type: integer
+                  description: New position in the meal plan (starting from 0)
+      responses:
+        '200':
+          description: Recipe position successfully updated
+        '400':
+          description: Invalid recipe ID or position
+        '401':
+          description: Unauthorized - user must be logged in
+        '404':
+          description: Recipe not found in meal plan
+  
           
   /recipes/preview:
     get:
@@ -238,8 +442,34 @@ paths:
                 $ref: '#/components/schemas/FullRecipe'
         '404':
           description: Recipe not found
-        
           
+  /recipes/{recipeId}/preparation:
+    get:
+      tags:
+        - recipe
+      summary: Get recipe preparation details
+      description: >
+        Returns detailed preparation instructions for a recipe, including step-by-step instructions 
+        and ingredients needed for each step.
+      parameters:
+        - name: recipeId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Recipe preparation details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecipePreparation'
+        '404':
+          description: Recipe not found
+
+  
+
+
   /search:
     get:
       tags:
@@ -297,27 +527,6 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/RecipePreview'
-  /recipes:
-    post:
-      tags:
-        - recipe
-      summary: Create a new recipe
-      description: >
-        Allows an authenticated user to submit a new recipe. 
-        The recipe will be stored in the database and shown in their personal area under "My Recipes".
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/NewRecipe'
-      responses:
-        '201':
-          description: Recipe created successfully
-        '400':
-          description: Invalid input data
-        '401':
-          description: Unauthorized – user must be logged in
 
                   
   /about:
