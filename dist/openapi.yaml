@@ -375,7 +375,7 @@ paths:
               properties:
                 position:
                   type: integer
-                  description: New position in the meal plan (starting from 0)
+                  description: New position in the meal plan (starting from 0)           
       responses:
         '200':
           description: Recipe position successfully updated
