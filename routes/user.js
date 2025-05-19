@@ -43,6 +43,39 @@ router.get("/me", async (req, res, next) => {
   }
 });
 
+// מסמן מתכון כנצפה על ידי המשתמש
+router.post('/me/viewed/:recipeId', async (req, res, next) => {
+  try {
+    const user_id = req.session.user_id;
+    const recipe_id = req.params.recipeId;
+    
+    await user_utils.markRecipeAsViewed(user_id, recipe_id);
+    
+    res.status(200).send({ 
+      message: "Recipe successfully marked as viewed",
+      success: true
+    });
+  } catch(error) {
+    next(error);
+  }
+});
+
+// מחזיר את המתכונים האחרונים שנצפו על ידי המשתמש
+router.get('/me/last-watched', async (req, res, next) => {
+  try {
+    const user_id = req.session.user_id;
+    const recipes_id = await user_utils.getLastViewedRecipes(user_id);
+    
+    let recipes_id_array = [];
+    recipes_id.map((element) => recipes_id_array.push(element.recipe_id)); // חילוץ מזהי המתכונים למערך
+    
+    const results = await recipe_utils.getRecipeDetails(recipes_id_array);
+    res.status(200).send(results);
+  } catch(error) {
+    next(error);
+  }
+});
+
 
 
 // מחזיר את המועדפים של המשתמש
@@ -52,7 +85,7 @@ router.get('/me/favorites', async (req, res, next) => {
     const recipes_id = await user_utils.getFavoriteRecipes(user_id);
     let recipes_id_array = [];
     recipes_id.map((element) => recipes_id_array.push(element.recipe_id)); //extracting the recipe ids into array
-    const results = await recipe_utils.getRecipesPreview(recipes_id_array);
+    const results = await recipe_utils.getRecipeDetails(recipes_id_array);
     res.status(200).send(results);
   } catch(error) {
     next(error); 
@@ -102,12 +135,51 @@ router.delete('/me/favorites', async (req, res, next) => {
   }
 });
 
+// הוספת מתכון חדש למשתמש המחובר
+router.post('/me/recipes', async (req, res, next) => {
+  try {
+    const user_id = req.session.user_id;
+    
+    // וידוא שכל השדות הנדרשים קיימים
+    const { title, image, duration, isVegan, isVegetarian, isGlutenFree, ingredients, instructions, servings } = req.body;
+    
+    if (!title || !image || !duration || isVegan === undefined || isVegetarian === undefined || 
+        isGlutenFree === undefined || !ingredients || !instructions || !servings) {
+      return res.status(400).send({ message: "Missing required fields", success: false });
+    }
+    
+    // ודא שרשימת המרכיבים היא מערך
+    if (!Array.isArray(ingredients)) {
+      return res.status(400).send({ message: "Ingredients must be an array", success: false });
+    }
+    
+    // יצירת המתכון חדש
+    const recipe_id = await user_utils.createNewRecipe(user_id, {
+      title,
+      image,
+      duration,
+      popularity: 0, // המתכון החדש מתחיל עם 0 לייקים
+      isVegan,
+      isVegetarian,
+      isGlutenFree,
+      ingredients,
+      instructions,
+      servings
+    });
+    
+    res.status(201).send({ 
+      message: "Recipe created successfully", 
+      success: true,
+      recipe_id: recipe_id
+    });
+    
+  } catch(error) {
+    next(error);
+  }
+});
+
 
 module.exports = router;
 
 
 
-
-
-
-module.exports = router;
