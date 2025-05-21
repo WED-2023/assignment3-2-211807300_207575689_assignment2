@@ -252,16 +252,31 @@ router.get("/me/recipes/:id/startcooking", async (req, res, next) => {
     }
 
     const recipeId = req.params.id;
-    const instructions = await recipe_utils.combineInstructionsWithIngredients(recipeId);
+    const [source, recipe_id] = recipeId.split('_');
+    let full_recipe;
+
+    if (source === "s") {
+      full_recipe = await recipe_utils.combineInstructionsWithIngredients(recipe_id);
+    } else if (source === "m") {
+      const recipe_array = await recipe_utils.getSelfRecipeDetails(recipe_id);
+      full_recipe = recipe_array[0]; // כי הפונקציה מחזירה מערך
+    } else if (source === "f") {
+      const recipe_array = await recipe_utils.getFamilyRecipeDetails(recipe_id);
+      full_recipe = recipe_array[0]; // גם כאן
+    } else {
+      return res.status(400).send({ message: "Unknown recipe source" });
+    }
 
     res.status(200).send({
       recipe_id: recipeId,
-      instructions
+      full_recipe
     });
+
   } catch (err) {
     next(err);
   }
 });
+
 
 
 

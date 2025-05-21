@@ -20,6 +20,7 @@ async function getRecipeInformation(recipe_id) {
 }
 
 async function getRecipeDetails(recipe_ids) {
+  console.log(recipe_ids)
   try {
     // אם זה מזהה בודד, הפוך אותו למערך
     if (!Array.isArray(recipe_ids)) {
@@ -30,17 +31,19 @@ async function getRecipeDetails(recipe_ids) {
     const results = [];
     
     // עבור על כל מזהה ושלוף את המידע
-    for (let recipe_id of recipe_ids) {
-      try {
+    for (let recipeid of recipe_ids) {
+      const [source, recipe_id] = recipeid.split('_');
+      if (source ==="s"){
+        try {
         let recipe_info = await getRecipeInformation(recipe_id);
         let { id, title, readyInMinutes, image, aggregateLikes, vegan, vegetarian, glutenFree } = recipe_info.data;
         
         results.push({
-          id: id,
+          id: "s_"+id,
           title: title,
-          readyInMinutes: readyInMinutes,
+          duration: readyInMinutes,
           image: image,
-          popularity: aggregateLikes,
+          likes: aggregateLikes,
           vegan: vegan,
           vegetarian: vegetarian,
           glutenFree: glutenFree
@@ -50,6 +53,49 @@ async function getRecipeDetails(recipe_ids) {
         // המשך לפריט הבא אם יש שגיאה
         continue;
       }
+      }
+      //------------------------------------------------------------------------
+      if (source === "m") {
+        try {
+          let recipe_array = await getSelfRecipeDetails(recipe_id);
+          let recipe_info = recipe_array[0]
+          results.push({
+            id: "m_" + recipe_info.id,
+            title: recipe_info.title,
+            duration: recipe_info.duration,
+            image: recipe_info.image,
+            likes: recipe_info.likes,
+            vegan: recipe_info.vegan,
+            vegetarian: recipe_info.vegetarian,
+            glutenFree: recipe_info.glutenFree
+          });
+        } catch (err) {
+          console.error(`Error fetching self recipe ${recipe_id}: ${err.message}`);
+          continue;
+        }
+      }
+
+      if (source === "f") {
+        try {
+          let recipe_array = await getFamilyRecipeDetails(recipe_id);
+          let recipe_info = recipe_array[0]
+          console.log("FAMILY RECIPE:", recipe_info);
+          results.push({
+            id: recipe_info.id,
+            title: recipe_info.title,
+            duration: recipe_info.duration,
+            image: recipe_info.image,
+            likes: recipe_info.likes,
+            vegan: recipe_info.vegan,
+            vegetarian: recipe_info.vegetarian,
+            glutenFree: recipe_info.glutenFree
+          });
+        } catch (err) {
+          console.error(`Error fetching family recipe ${recipe_id}: ${err.message}`);
+          continue;
+        }
+      }
+      //-----------------------------------------------------------------------
     }
     
     return results;
@@ -80,7 +126,6 @@ async function getAnalyzedInstructions(recipe_id) {
     throw err; // אם זו שגיאה אחרת – לזרוק
   }
 }
-
 
 async function combineInstructionsWithIngredients(recipe_id) {
   try {
@@ -156,7 +201,7 @@ async function combineInstructionsWithIngredients(recipe_id) {
     const preparationInfo = {
       recipeId: recipe_id,
       title: infoRes.data.title,
-      readyInMinutes: infoRes.data.readyInMinutes,
+      duration: infoRes.data.readyInMinutes,
       servings: infoRes.data.servings,
       ingredients: ingredients,
       instructions: instructions
@@ -184,6 +229,7 @@ async function combineInstructionsWithIngredients(recipe_id) {
 
 
 async function getSelfRecipeDetails(recipe_ids) {
+
   try {
     if (!Array.isArray(recipe_ids)) {
       recipe_ids = [recipe_ids];
@@ -193,26 +239,28 @@ async function getSelfRecipeDetails(recipe_ids) {
     const idsList = recipe_ids.map(id => `'${id}'`).join(",");
 
     const recipes = await DButils.execQuery(`
-      SELECT recipe_id, title, image, duration, servings, instructions, likes,
-             is_vegan, is_vegetarian, is_gluten_free, ingredients
+      SELECT recipe_id, title, image, duration, servings, likes,
+             is_vegan, is_vegetarian, is_gluten_free, ingredients, instructions
       FROM my_recipes
       WHERE recipe_id IN (${idsList})
     `);
 
+
     const formatted = recipes.map(recipe => ({
-      id: recipe.recipe_id,
+      id: "m_" +recipe.recipe_id,
       title: recipe.title,
       image: recipe.image,
       duration: recipe.duration,
       likes: recipe.likes,
-      isVegan: recipe.is_vegan,
-      isVegetarian: recipe.is_vegetarian,
-      isGlutenFree: recipe.is_gluten_free,
+      isVegan: recipe.is_vegan=== 1,
+      isVegetarian: recipe.is_vegetarian=== 1,
+      isGlutenFree: recipe.is_gluten_free=== 1,
       // --לשאול את הבנות לגבי הוגיקה של למה להוסיף את זה אם זה פרטי ואם כן צרי להוסיף להסיר את הערות מהקובץAPI ולצור שאילות SQL לבדיקה של השדות
       // viewed: false,
       // isFavorite": false
-      ingredients: JSON.parse(recipe.ingredients),
-      instructions: JSON.parse(recipe.instructions)
+      //instructions: JSON.parse(recipe.instructions)
+      ingredients:recipe.ingredients,
+      instructions: recipe.instructions
     }));
 
     return formatted;
@@ -232,20 +280,28 @@ async function getFamilyRecipeDetails(recipe_ids) {
     }
 
     const idsList = recipe_ids.map(id => `'${id}'`).join(",");
+
     const recipes = await DButils.execQuery(`
-      SELECT id, title, image, instructions, tradition, family_member, ingredients
+      SELECT 
+        id, title, image, instructions, tradition, family_member, ingredients,
+        duration, likes, vegan, vegetarian, glutenFree
       FROM family_recipes
       WHERE id IN (${idsList})
     `);
 
     return recipes.map(recipe => ({
-      id: recipe.id,
+      id: "f_" + recipe.id,
       title: recipe.title,
       image: recipe.image,
       instructions: recipe.instructions,
       tradition: recipe.tradition,
       family_member: recipe.family_member,
-      ingredients: JSON.parse(recipe.ingredients)
+      ingredients: recipe.ingredients,
+      duration: recipe.duration,
+      likes: recipe.likes,
+      vegan: recipe.vegan === 1,
+      vegetarian: recipe.vegetarian === 1,
+      glutenFree: recipe.glutenFree === 1
     }));
   } catch (error) {
     throw {
@@ -254,6 +310,7 @@ async function getFamilyRecipeDetails(recipe_ids) {
     };
   }
 }
+
 
 /**
  * מקבל מספר מתכונים אקראיים מ-Spoonacular API
@@ -269,10 +326,10 @@ async function getRandomRecipes(number = 3) {
     });
     
     return response.data.recipes.map(recipe => ({
-      id: recipe.id,
+      id: "s_"+recipe.id,
       title: recipe.title,
       image: recipe.image,
-      duration: recipe.readyInMinutes,
+      duration: recipe.duration,
       likes: recipe.aggregateLikes,
       isVegan: recipe.vegan,
       isVegetarian: recipe.vegetarian,
@@ -312,10 +369,10 @@ async function getRecipePreviews(number = 10) {
     
     // מיפוי התוצאות לפורמט הרצוי
     return response.data.results.map(recipe => ({
-      id: recipe.id,
+      id: "s_"+recipe.id,
       title: recipe.title,
       image: recipe.image || "", // טיפול במקרה שאין תמונה
-      duration: recipe.readyInMinutes || 0, // טיפול במקרה שאין זמן הכנה
+      duration: recipe.duration || 0, // טיפול במקרה שאין זמן הכנה
       likes: recipe.aggregateLikes || 0,
       isVegan: recipe.vegan || false,
       isVegetarian: recipe.vegetarian || false,

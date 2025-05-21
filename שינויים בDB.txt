@@ -10,13 +10,21 @@ ALTER TABLE my_recipes ADD COLUMN ingredients TEXT;
 -- עבור family_recipes
 CREATE TABLE family_recipes (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT,
     title VARCHAR(255) NOT NULL,
-    image VARCHAR(255) NOT NULL,
+    image TEXT,
     family_member VARCHAR(100) NOT NULL,
     tradition TEXT,
     ingredients JSON NOT NULL, -- אחסון JSON
     instructions JSON NOT NULL -- אחסון JSON
 );
+
+ALTER TABLE family_recipes
+ADD COLUMN duration INT DEFAULT NULL,
+ADD COLUMN likes INT DEFAULT 0,
+ADD COLUMN vegan BOOLEAN DEFAULT FALSE,
+ADD COLUMN vegetarian BOOLEAN DEFAULT FALSE,
+ADD COLUMN glutenFree BOOLEAN DEFAULT FALSE;
 
 -- עבור my_recipes
 CREATE TABLE my_recipes (
