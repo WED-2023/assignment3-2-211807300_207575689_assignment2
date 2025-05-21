@@ -261,63 +261,12 @@ paths:
           content:
             application/json:
               schema:
-                {
-                "type": "object",
-                "properties": {
-                  "ingredients": {
-                    "type": "array",
-                    "description": "List of ingredients used in the recipe.",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "integer",
-                          "description": "Unique ID of the ingredient."
-                        },
-                        "name": {
-                          "type": "string",
-                          "description": "Name of the ingredient."
-                        },
-                        "amount": {
-                          "type": ["number", "null"],
-                          "description": "Quantity of the ingredient (metric)."
-                        },
-                        "unit": {
-                          "type": ["string", "null"],
-                          "description": "Unit of measurement for the ingredient (e.g. 'g', 'ml', 'Tbsps')."
-                        }
-                      },
-                      "required": ["id", "name"]
-                    }
-                  },
-                  "instructions": {
-                    "type": "array",
-                    "description": "List of instructions for preparing the recipe.",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "number": {
-                          "type": "integer",
-                          "description": "Step number in the recipe."
-                        },
-                        "step": {
-                          "type": "string",
-                          "description": "Text describing the instruction step."
-                        }
-                      },
-                      "required": ["number", "step"]
-                    }
-                  }
-                },
-                "required": ["ingredients", "instructions"]
-              }  
+                $ref: '#/components/schemas/RecipePreparation'
         '401':
           description: Unauthorized – user must be logged in
         '500':
           description: Server error – Failed to fetch recipe instructions
   
-
-
   /users/me/meal-plan:
     get:
       tags:
@@ -568,10 +517,7 @@ paths:
         '404':
           description: Recipe not found
 
-  
-
-
-  /search:
+  /recipes/search:
     get:
       tags:
         - recipe
@@ -655,6 +601,48 @@ paths:
 
 components:
   schemas:
+    # סכמה למרכיב בודד
+    Ingredient:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: integer
+          example: 1
+          description: מזהה ייחודי של המרכיב
+        name:
+          type: string
+          example: "בצל"
+          description: שם המרכיב
+        amount:
+          type: number
+          nullable: true
+          example: 1
+          description: כמות המרכיב
+        unit:
+          type: string
+          nullable: true
+          example: "יחידה"
+          description: יחידת המידה
+
+    # סכמה להוראת הכנה
+    Instruction:
+      type: object
+      required:
+        - number
+        - step
+      properties:
+        number:
+          type: integer
+          example: 1
+          description: מספר השלב
+        step:
+          type: string
+          example: "חתוך את הבצל לקוביות קטנות"
+          description: תיאור השלב
+
     RegisterUser:
       type: object
       required:
@@ -781,17 +769,17 @@ components:
       properties:
         id:
           type: string
-          example: abc123
+          example: "abc123"
         title:
           type: string
-          example: Vegan Stir Fry
+          example: "Vegan Stir Fry"
         image:
           type: string
           format: uri
-          example: https://example.com/images/stirfry.jpg
+          example: "https://example.com/images/stirfry.jpg"
         duration:
-          type: string
-          example: "30 minutes"
+          type: integer
+          example: 30
         likes:
           type: integer
           example: 1000
@@ -813,17 +801,11 @@ components:
         ingredients:
           type: array
           items:
-            type: object
-            properties:
-              name:
-                type: string
-                example: Broccoli
-              amount:
-                type: string
-                example: "200g"
+            $ref: '#/components/schemas/Ingredient'
         instructions:
-          type: string
-          example: "1. Cut vegetables\n2. Stir fry with sauce for 10 minutes..."
+          type: array
+          items:
+            $ref: '#/components/schemas/Instruction'
         servings:
           type: integer
           example: 4
@@ -843,11 +825,11 @@ components:
       properties:
         title:
           type: string
-          example: Green Thai Curry
+          example: "Green Thai Curry"
         image:
           type: string
           format: uri
-          example: https://example.com/images/curry.jpg
+          example: "https://example.com/images/curry.jpg"
         duration:
           type: integer
           example: 30
@@ -867,27 +849,14 @@ components:
         ingredients:
           type: array
           items:
-            type: object
-            required:
-              - name
-              - quantity
-            properties:
-              name:
-                type: string
-                example: Coconut Milk
-              quantity:
-                type: string
-                example: 1 can
+            $ref: '#/components/schemas/Ingredient'
         instructions:
-          type: string
-          example: >
-            1. Heat oil in pan. 
-            2. Add curry paste and fry. 
-            3. Add coconut milk and vegetables.
+          type: array
+          items:
+            $ref: '#/components/schemas/Instruction'
         servings:
           type: integer
           example: 4
-          
           
     FamilyRecipe:
       type: object
@@ -901,27 +870,84 @@ components:
       properties:
         title:
           type: string
-          example: Grandma's Passover Soup
+          example: "Grandma's Passover Soup"
         image:
           type: string
           format: uri
-          example: https://example.com/images/soup.jpg
+          example: "https://example.com/images/soup.jpg"
         family_member:
           type: string
           description: The name of the person who passed down the recipe
-          example: Grandma Miriam
+          example: "Grandma Miriam"
         tradition:
           type: string
           description: When the recipe is usually prepared
-          example: Passover dinner
+          example: "Passover dinner"
         ingredients:
           type: array
           items:
-            type: string
-          example: ["2 carrots", "1 onion", "chicken stock"]
+            $ref: '#/components/schemas/Ingredient'
         instructions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Instruction'
+
+    RecipePreparation:
+      type: object
+      required:
+        - recipeId
+        - title
+        - readyInMinutes
+        - servings
+        - ingredients
+        - instructions
+      properties:
+        recipeId:
           type: string
-          example: >
-            1. Boil chicken stock. 
-            2. Add chopped vegetables. 
-            3. Simmer for 2 hours.
+          example: "abc123"
+        title:
+          type: string
+          example: "Vegan Soup"
+        readyInMinutes:
+          type: integer
+          example: 45
+        servings:
+          type: integer
+          example: 4
+        ingredients:
+          type: array
+          items:
+            $ref: '#/components/schemas/Ingredient'
+        instructions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Instruction'
+
+    MealPlan:
+      type: object
+      properties:
+        recipes:
+          type: array
+          items:
+            type: object
+            properties:
+              recipeId:
+                type: string
+                example: "abc123"
+              title:
+                type: string
+                example: "Vegan Pasta"
+              image:
+                type: string
+                format: uri
+                example: "https://example.com/images/pasta.jpg"
+              duration:
+                type: integer
+                example: 30
+              position:
+                type: integer
+                example: 0
+              progress:
+                type: integer
+                description: Percentage of completion (0-100)
+                example: 50

@@ -1,5 +1,6 @@
 const DButils = require("./DButils");
 
+
 async function markAsFavorite(user_id, recipe_id){
     await DButils.execQuery(`insert into Favorites values ('${user_id}',${recipe_id})`);
 }
@@ -24,12 +25,13 @@ async function createNewRecipe(user_id, recipeData) {
     
     // המרת מערך המרכיבים ל-JSON
     const ingredientsJson = JSON.stringify(recipeData.ingredients);
+    const instructionsJson = JSON.stringify(recipeData.instructions);
     
     // שמירה של המתכון בטבלת my_recipes, כולל שדה ingredients
     const result = await DButils.execQuery(
       `INSERT INTO my_recipes (user_id, title, image, duration, servings, instructions, likes, is_vegan, is_vegetarian, is_gluten_free, ingredients) 
        VALUES ('${user_id}', '${recipeData.title}', '${recipeData.image}', ${recipeData.duration}, 
-               ${recipeData.servings}, '${recipeData.instructions}', ${recipeData.popularity}, 
+               ${recipeData.servings}, '${instructionsJson}', ${recipeData.popularity}, 
                ${isVegan}, ${isVegetarian}, ${isGlutenFree}, '${ingredientsJson}')`
     );
     
@@ -42,24 +44,66 @@ async function createNewRecipe(user_id, recipeData) {
 
 }
 
-async function getSelfRecipe(user_id){
-    const recipes_id = await DButils.execQuery(`select recipe_id from my_recipes where user_id='${user_id}'`);
-    return recipes_id;
+async function getSelfRecipe(user_id) {
+  const recipes_id = await DButils.execQuery(`SELECT recipe_id FROM my_recipes WHERE user_id='${user_id}'`);
+  return recipes_id;
 }
+
+
+// async function createNewFamilyRecipe(user_id, recipeData) {
+//   try {
+//     const ingredientsJson = JSON.stringify(recipeData.ingredients);
+//     // מאי-- חשוב לשים לב שזה יהיה בגרשיים כפולים כדי שאים יש גרש בפנים יעבוד
+//     const result = await DButils.execQuery(
+//       `INSERT INTO family_recipes (user_id, title,image,instructions, tradition, family_member, ingredients) 
+//        VALUES ("${user_id}", "${recipeData.title}", "${recipeData.image}", "${recipeData.instructions}", 
+//                "${recipeData.tradition}", "${recipeData.family_member}", "${ingredientsJson}")`
+//     );
+
+//     const recipe_id = result.insertId;
+
+//     return recipe_id;
+//   } catch (error) {
+//     throw { status: 500, message: "Failed to create family recipe: " + error.message };
+//   }
+// }
+
 
 
 async function createNewFamilyRecipe(user_id, recipeData) {
   try {
+    // המרת מערך המרכיבים ל-JSON
     const ingredientsJson = JSON.stringify(recipeData.ingredients);
-    // מאי-- חשוב לשים לב שזה יהיה בגרשיים כפולים גדי שיאם יש גרש בפנים יעבוד
+    
+    // הכנת המחרוזות לשימוש ב-SQL (בריחה מתווים מיוחדים)
+    const escapeSQL = (str) => str.replace(/['"\\\n\r\u0000\u001a]/g, match => {
+      switch (match) {
+        case "'": return "\\'";
+        case '"': return '\\"';
+        case '\\': return '\\\\';
+        case '\n': return '\\n';
+        case '\r': return '\\r';
+        case '\u0000': return '\\0';
+        case '\u001a': return '\\Z';
+        default: return match;
+      }
+    });
+    
+    const title = escapeSQL(recipeData.title);
+    const image = escapeSQL(recipeData.image);
+    const instructions = escapeSQL(recipeData.instructions);
+    const tradition = escapeSQL(recipeData.tradition);
+    const family_member = escapeSQL(recipeData.family_member);
+    const ingredients = escapeSQL(ingredientsJson);
+    
+    // שימוש בגרשיים בודדים לערכים ב-SQL
     const result = await DButils.execQuery(
-      `INSERT INTO family_recipes (user_id, title,image,instructions, tradition, family_member, ingredients) 
-       VALUES ("${user_id}", "${recipeData.title}", "${recipeData.image}", "${recipeData.instructions}", 
-               "${recipeData.tradition}", "${recipeData.family_member}", "${ingredientsJson}")`
+      `INSERT INTO family_recipes (user_id, title, image, instructions, tradition, family_member, ingredients) 
+       VALUES ('${user_id}', '${title}', '${image}', '${instructions}', 
+               '${tradition}', '${family_member}', '${ingredients}')`
     );
-
+    
     const recipe_id = result.insertId;
-
     return recipe_id;
   } catch (error) {
     throw { status: 500, message: "Failed to create family recipe: " + error.message };
@@ -119,7 +163,8 @@ async function getLastViewedRecipes(user_id, limit = 3) {
     throw { status: 500, message: "Failed to get last viewed recipes: " + error.message };
   }
 }
-  
+
+
 
 exports.removeFromFavorites = removeFromFavorites;
 exports.createNewRecipe = createNewRecipe;
