@@ -67,36 +67,40 @@ router.get('/me/last-watched', async (req, res, next) => {
     const recipes_id = await user_utils.getLastViewedRecipes(user_id);
     
     let recipes_id_array = [];
-    recipes_id.map((element) => recipes_id_array.push(element.recipe_id)); // חילוץ מזהי המתכונים למערך
+    recipes_id.map((element) => recipes_id_array.push(element.recipe_id));
     
-    const results = await recipe_utils.getRecipeDetails(recipes_id_array);
+    const results = await recipe_utils.getAllRecipesPreviewDetails(user_id,recipes_id_array);
     res.status(200).send(results);
   } catch(error) {
     next(error);
   }
 });
 
-// מחזיר את המועדפים של המשתמש
+/**
+ * Get user's favorite recipes
+ */
 router.get('/me/favorites', async (req, res, next) => {
   try {
     const user_id = req.session.user_id;
     const recipes_id = await user_utils.getFavoriteRecipes(user_id);
     let recipes_id_array = [];
-    recipes_id.map((element) => recipes_id_array.push(element.recipe_id)); //extracting the recipe ids into array
-    const results = await recipe_utils.getRecipeDetails(recipes_id_array);
+    recipes_id.map((element) => recipes_id_array.push(element.recipe_id));
+    const results = await recipe_utils.getAllRecipesPreviewDetails(user_id,recipes_id_array);
     res.status(200).send(results);
   } catch(error) {
     next(error); 
   }
 });
 
-// מוסיף מתכון למועדפים
+/**
+ * Add recipe to favorites
+ */
 router.post('/me/favorites/:recipeId', async (req, res, next) => {
   try {
     const user_id = req.session.user_id;
     const recipe_id = req.params.recipeId;
     
-    // בדיקה שהמתכון לא קיים כבר במועדפים
+    // Check if recipe is already in favorites
     const favorites = await user_utils.getFavoriteRecipes(user_id);
     const isAlreadyFavorite = favorites.some(fav => fav.recipe_id === recipe_id);
     if (isAlreadyFavorite) {
@@ -110,13 +114,15 @@ router.post('/me/favorites/:recipeId', async (req, res, next) => {
   }
 });
 
-// מסיר מתכון מהמועדפים
-router.delete('/me/favorites', async (req, res, next) => {
+/**
+ * Remove recipe from favorites
+ */
+router.delete('/me/favorites/:recipeId', async (req, res, next) => {
   try {
     const user_id = req.session.user_id;
     const recipe_id = req.params.recipeId;
     
-    // בדיקה שהמתכון קיים במועדפים
+    // Check if recipe exists in favorites
     const favorites = await user_utils.getFavoriteRecipes(user_id);
     const isInFavorites = favorites.some(fav => fav.recipe_id === recipe_id);
     if (!isInFavorites) {
@@ -133,36 +139,43 @@ router.delete('/me/favorites', async (req, res, next) => {
   }
 });
 
-// הוספת מתכון חדש למשתמש המחובר
+/**
+ * Create a new recipe for the logged-in user
+ */
 router.post('/me/recipes', async (req, res, next) => {
   try {
     const user_id = req.session.user_id;
     
-    // וידוא שכל השדות הנדרשים קיימים
-    const { title, image, duration, isVegan, isVegetarian, isGlutenFree, ingredients, instructions, servings } = req.body;
+    // Validate all required fields are present
+    const { title, image, duration, vegan, vegetarian, glutenFree, ingredients, instructions, servings } = req.body;
     
-    if (!title || !image || !duration || isVegan === undefined || isVegetarian === undefined || 
-        isGlutenFree === undefined || !ingredients || !instructions || !servings) {
+    if (!title || !image || !duration || vegan === undefined || vegetarian === undefined || 
+        glutenFree === undefined || !ingredients || !instructions || !servings) {
       return res.status(400).send({ message: "Missing required fields", success: false });
     }
     
-    // ודא שרשימת המרכיבים היא מערך
+    // Ensure ingredients is an array
     if (!Array.isArray(ingredients)) {
       return res.status(400).send({ message: "Ingredients must be an array", success: false });
     }
     
-    // יצירת המתכון חדש
+    // Ensure instructions is an array
+    if (!Array.isArray(instructions)) {
+      return res.status(400).send({ message: "Instructions must be an array", success: false });
+    }
+    
+    // Create new recipe
     const recipe_id = await user_utils.createNewRecipe(user_id, {
       title,
       image,
       duration,
-      popularity: 0, // המתכון החדש מתחיל עם 0 לייקים
-      isVegan,
-      isVegetarian,
-      isGlutenFree,
+      servings,
+      popularity: 0, // New recipe starts with 0 likes
+      vegan,
+      vegetarian,
+      glutenFree,
       ingredients,
-      instructions,
-      servings
+      instructions
     });
     
     res.status(201).send({ 
@@ -176,51 +189,59 @@ router.post('/me/recipes', async (req, res, next) => {
   }
 });
 
-// מחזיר את המתכונים שנוצרו על ידי המשתמש
+/**
+ * Get recipes created by the user
+ */
 router.get('/me/my-recipes', async (req, res, next) => {
   try {
     const user_id = req.session.user_id;
     const recipes_id = await user_utils.getSelfRecipe(user_id);
     let recipes_id_array = [];
-    recipes_id.map((element) => recipes_id_array.push(element.recipe_id)); //extracting the recipe ids into array
-    const results = await recipe_utils.getSelfRecipeDetails(recipes_id_array);
+    recipes_id.map((element) => recipes_id_array.push(element.recipe_id));
+    const results = await recipe_utils.getAllRecipesPreviewDetails(user_id,recipes_id_array);
     res.status(200).send(results);
   } catch(error) {
     next(error); 
   }
 });
 
-// הוספת מתכון משפחתי למשתמש המחובר
+/**
+ * Create a new family recipe for the logged-in user
+ */
 router.post('/me/family-recipes', async (req, res, next) => {
   try {
     const user_id = req.session.user_id;
     
-    // וידוא שכל השדות הנדרשים קיימים
-    const { title, image, family_member, tradition, ingredients ,instructions } = req.body;
+    // Validate all required fields are present
+    const { title, image, family_member, tradition, ingredients, instructions } = req.body;
     
-    if (!title || !image || !family_member || !tradition ||  !ingredients || !instructions ) {
+    if (!title || !image || !family_member || !tradition || !ingredients || !instructions) {
       return res.status(400).send({ message: "Missing required fields", success: false });
     }
     
-    // ודא שרשימת המרכיבים היא מערך
+    // Ensure ingredients is an array
     if (!Array.isArray(ingredients)) {
       return res.status(400).send({ message: "Ingredients must be an array", success: false });
     }
     
-    // יצירת המתכון חדש
+    // Ensure instructions is an array
+    if (!Array.isArray(instructions)) {
+      return res.status(400).send({ message: "Instructions must be an array", success: false });
+    }
+    
+    // Create new family recipe
     const recipe_id = await user_utils.createNewFamilyRecipe(user_id, {
       title,
       image,
-      instructions, 
-      tradition, 
-      family_member, 
-      ingredients
+      family_member,
+      tradition,
+      ingredients,
+      instructions
     });
     
     res.status(201).send({ 
-      message: "Recipe created successfully", 
-      success: true,
-      recipe_id: recipe_id
+      message: "Family recipe created successfully", 
+      success: true
     });
     
   } catch(error) {
@@ -228,22 +249,25 @@ router.post('/me/family-recipes', async (req, res, next) => {
   }
 });
 
-// מחזיר את המתכונים המשפחתיים שנוצרו על ידי המשתמש
+/**
+ * Get family recipes created by the user
+ */
 router.get('/me/family-recipes', async (req, res, next) => {
   try {
     const user_id = req.session.user_id;
     const recipes_id = await user_utils.getFamilyRecipe(user_id);
     let recipes_id_array = [];
-    recipes_id.map((element) => recipes_id_array.push(element.id)); //extracting the recipe ids into array
-    const results = await recipe_utils.getFamilyRecipeDetails(recipes_id_array);
+    recipes_id.map((element) => recipes_id_array.push(element.id));
+    const results = await recipe_utils.getAllRecipesPreviewDetails(user_id,recipes_id_array);
     res.status(200).send(results);
   } catch(error) {
     next(error); 
   }
 });
 
-// התחל לעבוד על מתכון
-// בגלל שאין צור לשמור את ההתקדמות והכפיות אז נבצע זאת בצד לקוח רק בוויזואליזציה
+/**
+ * Start cooking a recipe - get detailed preparation info
+ */
 router.get("/me/recipes/:id/startcooking", async (req, res, next) => {
   try {
     const user_id = req.session.user_id;
@@ -256,33 +280,123 @@ router.get("/me/recipes/:id/startcooking", async (req, res, next) => {
     let full_recipe;
 
     if (source === "s") {
+      // Spoonacular recipe
       full_recipe = await recipe_utils.combineInstructionsWithIngredients(recipe_id);
     } else if (source === "m") {
+      // Self-created recipe
       const recipe_array = await recipe_utils.getSelfRecipeDetails(recipe_id);
-      full_recipe = recipe_array[0]; // כי הפונקציה מחזירה מערך
+      full_recipe = recipe_array[0];
     } else if (source === "f") {
+      // Family recipe
       const recipe_array = await recipe_utils.getFamilyRecipeDetails(recipe_id);
-      full_recipe = recipe_array[0]; // גם כאן
+      full_recipe = recipe_array[0];
     } else {
       return res.status(400).send({ message: "Unknown recipe source" });
     }
 
-    res.status(200).send({
-      recipe_id: recipeId,
-      full_recipe
-    });
+    if (!full_recipe) {
+      return res.status(404).send({ message: "Recipe not found" });
+    }
+
+    res.status(200).send(full_recipe);
 
   } catch (err) {
-    next(err);
+    console.error("Error in startcooking:", err);
+    res.status(500).send({ message: "Failed to fetch recipe instructions" });
   }
 });
 
+/**
+ * Get user's meal plan
+ */
+router.get('/me/meal-plan', async (req, res, next) => {
+  try {
+    const user_id = req.session.user_id;
+    const mealPlan = await user_utils.getMealPlan(user_id);
+    res.status(200).send(mealPlan);
+  } catch(error) {
+    next(error);
+  }
+});
 
+/**
+ * Add recipe to meal plan
+ */
+router.post('/me/meal-plan', async (req, res, next) => {
+  try {
+    const user_id = req.session.user_id;
+    const { recipeId, position } = req.body;
+    
+    if (!recipeId) {
+      return res.status(400).send({ message: "Recipe ID is required" });
+    }
+    
+    await user_utils.addToMealPlan(user_id, recipeId, position);
+    res.status(200).send({ message: "Recipe successfully added to meal plan" });
+  } catch(error) {
+    next(error);
+  }
+});
 
+/**
+ * Clear entire meal plan
+ */
+router.delete('/me/meal-plan', async (req, res, next) => {
+  try {
+    const user_id = req.session.user_id;
+    await user_utils.clearMealPlan(user_id);
+    res.status(200).send({ message: "Meal plan successfully cleared" });
+  } catch(error) {
+    next(error);
+  }
+});
 
+/**
+ * Remove specific recipe from meal plan
+ */
+router.delete('/me/meal-plan/:recipeId', async (req, res, next) => {
+  try {
+    const user_id = req.session.user_id;
+    const recipe_id = req.params.recipeId;
+    
+    const result = await user_utils.removeFromMealPlan(user_id, recipe_id);
+    
+    res.status(200).send({
+      message: result.remainingRecipes === 0 ? 
+        "Recipe successfully removed from meal plan. Your meal plan is now empty." :
+        "Recipe successfully removed from meal plan",
+      recipeId: recipe_id,
+      remainingRecipes: result.remainingRecipes
+    });
+  } catch(error) {
+    if (error.status === 404) {
+      return res.status(404).send({ message: "Recipe not found in meal plan" });
+    }
+    next(error);
+  }
+});
 
+/**
+ * Update recipe position in meal plan
+ */
+router.put('/me/meal-plan/:recipeId', async (req, res, next) => {
+  try {
+    const user_id = req.session.user_id;
+    const recipe_id = req.params.recipeId;
+    const { position } = req.body;
+    
+    if (position === undefined || position < 0) {
+      return res.status(400).send({ message: "Valid position is required" });
+    }
+    
+    await user_utils.updateMealPlanPosition(user_id, recipe_id, position);
+    res.status(200).send({ message: "Recipe position successfully updated" });
+  } catch(error) {
+    if (error.status === 404) {
+      return res.status(404).send({ message: "Recipe not found in meal plan" });
+    }
+    next(error);
+  }
+});
 
 module.exports = router;
-
-
-

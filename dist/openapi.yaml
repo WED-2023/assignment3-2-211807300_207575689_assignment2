@@ -180,7 +180,6 @@ paths:
         '401':
           description: Unauthorized – user must be logged in
 
-
   /users/me/my-recipes:
     get:
       tags:
@@ -237,8 +236,6 @@ paths:
           description: Invalid input data
         '401':
           description: Unauthorized – user must be logged in
-
-
 
   /users/me/recipes/{id}/startcooking:
     get:
@@ -435,7 +432,6 @@ paths:
           description: Unauthorized - user must be logged in
         '404':
           description: Recipe not found in meal plan
-  
           
   /recipes/preview:
     get:
@@ -574,7 +570,6 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/RecipePreview'
-
                   
   /about:
     get:
@@ -597,11 +592,9 @@ paths:
                     items:
                       type: string
                       format: uri
-    
 
 components:
   schemas:
-    # סכמה למרכיב בודד
     Ingredient:
       type: object
       required:
@@ -611,23 +604,22 @@ components:
         id:
           type: integer
           example: 1
-          description: מזהה ייחודי של המרכיב
+          description: Unique identifier of the ingredient
         name:
           type: string
-          example: "בצל"
-          description: שם המרכיב
+          example: "onion"
+          description: Name of the ingredient
         amount:
           type: number
           nullable: true
           example: 1
-          description: כמות המרכיב
+          description: Amount of the ingredient
         unit:
           type: string
           nullable: true
-          example: "יחידה"
-          description: יחידת המידה
+          example: "piece"
+          description: Unit of measurement
 
-    # סכמה להוראת הכנה
     Instruction:
       type: object
       required:
@@ -637,11 +629,11 @@ components:
         number:
           type: integer
           example: 1
-          description: מספר השלב
+          description: Step number
         step:
           type: string
-          example: "חתוך את הבצל לקוביות קטנות"
-          description: תיאור השלב
+          example: "Cut the onion into small cubes"
+          description: Step description
 
     RegisterUser:
       type: object
@@ -714,13 +706,13 @@ components:
         - image
         - duration
         - likes
-        - isVegan
-        - isVegetarian
-        - isGlutenFree
+        - vegan
+        - vegetarian
+        - glutenFree
       properties:
         id:
           type: string
-          example: "716429"
+          example: "s_716429"
         title:
           type: string
           example: "Pasta with Garlic, Scallions, Cauliflower & Breadcrumbs"
@@ -734,13 +726,13 @@ components:
         likes:
           type: integer
           example: 209
-        isVegan:
+        vegan:
           type: boolean
           example: false
-        isVegetarian:
+        vegetarian:
           type: boolean
           example: true
-        isGlutenFree:
+        glutenFree:
           type: boolean
           example: false
         viewed:
@@ -760,16 +752,16 @@ components:
         - image
         - duration
         - likes
-        - isVegan
-        - isVegetarian
-        - isGlutenFree
+        - vegan
+        - vegetarian
+        - glutenFree
         - ingredients
         - instructions
         - servings
       properties:
         id:
           type: string
-          example: "abc123"
+          example: "s_123"
         title:
           type: string
           example: "Vegan Stir Fry"
@@ -783,21 +775,18 @@ components:
         likes:
           type: integer
           example: 1000
-        isVegan:
+        vegan:
           type: boolean
           example: true
-        isVegetarian:
+        vegetarian:
           type: boolean
           example: true
-        isGlutenFree:
+        glutenFree:
           type: boolean
           example: false
-        viewed:
-          type: boolean
-          example: true
-        isFavorite:
-          type: boolean
-          example: false
+        servings:
+          type: integer
+          example: 4
         ingredients:
           type: array
           items:
@@ -806,9 +795,14 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Instruction'
-        servings:
-          type: integer
-          example: 4
+        viewed:
+          type: boolean
+          example: true
+          description: Only present for authenticated users
+        isFavorite:
+          type: boolean
+          example: false
+          description: Only present for authenticated users
       
     NewRecipe:
       type: object
@@ -819,9 +813,9 @@ components:
         - ingredients
         - instructions
         - servings
-        - isVegan
-        - isVegetarian
-        - isGlutenFree
+        - vegan
+        - vegetarian
+        - glutenFree
       properties:
         title:
           type: string
@@ -833,17 +827,16 @@ components:
         duration:
           type: integer
           example: 30
-        popularity:
+        servings:
           type: integer
-          example: 0
-          description: Number of likes, initialized to 0
-        isVegan:
+          example: 4
+        vegan:
           type: boolean
           example: true
-        isVegetarian:
+        vegetarian:
           type: boolean
           example: true
-        isGlutenFree:
+        glutenFree:
           type: boolean
           example: false
         ingredients:
@@ -854,9 +847,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Instruction'
-        servings:
+        likes:
           type: integer
-          example: 4
+          example: 0
+          description: Number of likes, initialized to 0
           
     FamilyRecipe:
       type: object
@@ -868,6 +862,10 @@ components:
         - ingredients
         - instructions
       properties:
+        id:
+          type: string
+          example: "f_123"
+          description: Recipe ID (only in responses)
         title:
           type: string
           example: "Grandma's Passover Soup"
@@ -883,6 +881,23 @@ components:
           type: string
           description: When the recipe is usually prepared
           example: "Passover dinner"
+        duration:
+          type: integer
+          example: 60
+          description: Cooking time in minutes
+        likes:
+          type: integer
+          example: 0
+          description: Number of likes
+        vegan:
+          type: boolean
+          example: false
+        vegetarian:
+          type: boolean
+          example: true
+        glutenFree:
+          type: boolean
+          example: false
         ingredients:
           type: array
           items:
@@ -897,18 +912,18 @@ components:
       required:
         - recipeId
         - title
-        - readyInMinutes
+        - duration
         - servings
         - ingredients
         - instructions
       properties:
         recipeId:
           type: string
-          example: "abc123"
+          example: "s_123"
         title:
           type: string
           example: "Vegan Soup"
-        readyInMinutes:
+        duration:
           type: integer
           example: 45
         servings:
@@ -933,7 +948,7 @@ components:
             properties:
               recipeId:
                 type: string
-                example: "abc123"
+                example: "s_123"
               title:
                 type: string
                 example: "Vegan Pasta"

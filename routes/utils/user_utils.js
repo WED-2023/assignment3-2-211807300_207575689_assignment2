@@ -2,7 +2,7 @@ const DButils = require("./DButils");
 
 
 async function markAsFavorite(user_id, recipe_id){
-    await DButils.execQuery(`insert into Favorites values (${user_id},"${recipe_id}")`);
+    await DButils.execQuery(`insert into Favorites values ('${user_id}',${recipe_id})`);
 }
 
 async function getFavoriteRecipes(user_id){
@@ -74,7 +74,6 @@ async function createNewFamilyRecipe(user_id, recipeData) {
   try {
     // המרת מערך המרכיבים ל-JSON
     const ingredientsJson = JSON.stringify(recipeData.ingredients);
-    const instructionsJson = JSON.stringify(recipeData.instructions);
     
     // הכנת המחרוזות לשימוש ב-SQL (בריחה מתווים מיוחדים)
     const escapeSQL = (str) => str.replace(/['"\\\n\r\u0000\u001a]/g, match => {
@@ -92,7 +91,7 @@ async function createNewFamilyRecipe(user_id, recipeData) {
     
     const title = escapeSQL(recipeData.title);
     const image = escapeSQL(recipeData.image);
-    const instructions = escapeSQL(instructionsJson);
+    const instructions = escapeSQL(recipeData.instructions);
     const tradition = escapeSQL(recipeData.tradition);
     const family_member = escapeSQL(recipeData.family_member);
     const ingredients = escapeSQL(ingredientsJson);

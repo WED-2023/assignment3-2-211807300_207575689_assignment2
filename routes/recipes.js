@@ -50,7 +50,7 @@ router.post("/", async (req, res, next) => {
  */
 router.get("/preview", async (req, res, next) => {
   try {
-    // מביא תצוגות מקדימות של 10 מתכונים פופולריים
+    // Spoonacular- מביא תצוגות מקדימות של 10 מתכונים פופולריים
     const recipes = await recipes_utils.getRecipePreviews();
     
     // בדיקה אם המשתמש מחובר כדי להוסיף מידע רלוונטי
@@ -120,7 +120,6 @@ router.get("/explore", async (req, res, next) => {
  * חיפוש מתכונים לפי מגוון פרמטרים
  */
 router.get("/search", async (req, res, next) => {
-  console.log("");
   try {
     // קבלת פרמטרים מהבקשה
     const { query, cuisine, diet, intolerance, sortBy, limit } = req.query;
@@ -132,7 +131,6 @@ router.get("/search", async (req, res, next) => {
         success: false
       });
     }
-    console.log("Search query:", query);
     
     // הגבלת מספר התוצאות
     const maxLimit = Math.min(parseInt(limit) || 5, 15);
@@ -181,10 +179,17 @@ router.get("/search", async (req, res, next) => {
 router.get("/:recipeId/preparation", async (req, res, next) => {
   try {
     const recipeId = req.params.recipeId;
-    
-    // משתמש בפונקציה הקיימת שמשלבת מרכיבים והוראות הכנה
-    const preparationDetails = await recipes_utils.combineInstructionsWithIngredients(recipeId);
-    
+    const [source, recipe_id] = recipeId.split('_');
+    const preparationDetails=null;
+    if (source === "s") {
+        // משתמש בפונקציה הקיימת שמשלבת מרכיבים והוראות הכנה
+      preparationDetails = await recipes_utils.combineInstructionsWithIngredients(recipeId);
+    }else if (source === "m") {
+      preparationDetails = await recipes_utils.getSelfRecipeDetails(recipeId);
+    } else if (source === "f") {
+      preparationDetails = await recipes_utils.getFamilyRecipefullDetails(recipeId);
+    }
+
     // אם המשתמש מחובר, סמן שצפה במתכון
     if (req.session && req.session.user_id) {
       const user_id = req.session.user_id;
