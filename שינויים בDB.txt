@@ -43,70 +43,13 @@ CREATE TABLE my_recipes (
 );
 
 
-
-
-
-async function getSelfRecipeDetails(recipe_ids) {
-  try {
-    if (!Array.isArray(recipe_ids) || recipe_ids.length === 0) {
-      return []; // החזר מערך ריק אם אין מזהים
-    }
-
-    // המר מזהים למחרוזת עבור SQL
-    const idsList = recipe_ids.map(id => `'${id}'`).join(",");
-
-    const recipes = await DButils.execQuery(`
-      SELECT recipe_id, title, image, duration, servings, instructions, likes,
-             is_vegan, is_vegetarian, is_gluten_free, ingredients
-      FROM my_recipes
-      WHERE recipe_id IN (${idsList})
-    `);
-
-    const formatted = recipes.map(recipe => {
-      let ingredients = [];
-      let instructions = [];
-      
-      // פענוח המרכיבים מ-JSON
-      try {
-        ingredients = JSON.parse(recipe.ingredients);
-      } catch (e) {
-        console.error(`Error parsing ingredients for recipe ${recipe.recipe_id}:`, e.message);
-        // אם פענוח נכשל, נשתמש במערך ריק
-      }
-      
-      // פענוח הוראות ההכנה מ-JSON
-      try {
-        instructions = JSON.parse(recipe.instructions);
-      } catch (e) {
-        console.error(`Error parsing instructions for recipe ${recipe.recipe_id}:`, e.message);
-        // אם פענוח נכשל, ננסה לפרסר את הטקסט כהוראות
-        if (typeof recipe.instructions === 'string') {
-          const lines = recipe.instructions.split(/\r?\n/).filter(line => line.trim());
-          instructions = lines.map((line, index) => ({
-            number: index + 1,
-            step: line.trim()
-          }));
-        }
-      }
-
-      return {
-        id: recipe.recipe_id,
-        title: recipe.title,
-        image: recipe.image,
-        duration: recipe.duration,
-        likes: recipe.likes,
-        isVegan: recipe.is_vegan === 1,
-        isVegetarian: recipe.is_vegetarian === 1,
-        isGlutenFree: recipe.is_gluten_free === 1,
-        ingredients: ingredients,
-        instructions: instructions,
-        servings: recipe.servings
-      };
-    });
-
-    return formatted;
-  } catch (error) {
-    console.error("Error in getSelfRecipeDetails:", error);
-    throw { status: 500, message: "Failed to get self recipe details: " + error.message };
-  }
-}
+CREATE TABLE meal_plan (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id VARCHAR(255) NOT NULL,
+    recipe_id VARCHAR(255) NOT NULL,
+    position INT NOT NULL DEFAULT 0,
+    progress INT DEFAULT 0 CHECK (progress >= 0 AND progress <= 100),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_user_recipe (user_id, recipe_id),
+    INDEX idx_user_position (user_id, position)
+);

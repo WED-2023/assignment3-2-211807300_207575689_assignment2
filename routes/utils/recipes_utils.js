@@ -47,6 +47,7 @@ async function combineInstructionsWithIngredients(recipe_id) {
     ]);
 
     if (!infoRes || !infoRes.data) {
+      console.log("combine")
       throw { status: 404, message: "Recipe not found" };
     }
 

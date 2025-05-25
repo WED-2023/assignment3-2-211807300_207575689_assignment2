@@ -198,7 +198,7 @@ router.get('/me/my-recipes', async (req, res, next) => {
     const recipes_id = await user_utils.getSelfRecipe(user_id);
     let recipes_id_array = [];
     recipes_id.map((element) => recipes_id_array.push(element.recipe_id));
-    const results = await recipe_utils.getAllRecipesPreviewDetails(user_id,recipes_id_array);
+    const results = await recipe_utils.getSelfRecipefullDetails(recipes_id_array);
     res.status(200).send(results);
   } catch(error) {
     next(error); 
@@ -258,7 +258,7 @@ router.get('/me/family-recipes', async (req, res, next) => {
     const recipes_id = await user_utils.getFamilyRecipe(user_id);
     let recipes_id_array = [];
     recipes_id.map((element) => recipes_id_array.push(element.id));
-    const results = await recipe_utils.getAllRecipesPreviewDetails(user_id,recipes_id_array);
+    const results = await recipe_utils.getFamilyRecipefullDetails(recipes_id_array);
     res.status(200).send(results);
   } catch(error) {
     next(error); 
@@ -284,11 +284,11 @@ router.get("/me/recipes/:id/startcooking", async (req, res, next) => {
       full_recipe = await recipe_utils.combineInstructionsWithIngredients(recipe_id);
     } else if (source === "m") {
       // Self-created recipe
-      const recipe_array = await recipe_utils.getSelfRecipeDetails(recipe_id);
+      const recipe_array = await recipe_utils.getSelfRecipefullDetails(recipe_id);
       full_recipe = recipe_array[0];
     } else if (source === "f") {
       // Family recipe
-      const recipe_array = await recipe_utils.getFamilyRecipeDetails(recipe_id);
+      const recipe_array = await recipe_utils.getFamilyRecipefullDetails(recipe_id);
       full_recipe = recipe_array[0];
     } else {
       return res.status(400).send({ message: "Unknown recipe source" });
@@ -296,6 +296,16 @@ router.get("/me/recipes/:id/startcooking", async (req, res, next) => {
 
     if (!full_recipe) {
       return res.status(404).send({ message: "Recipe not found" });
+    }
+
+    // הוסף את המתכון ל-meal plan אוטומטית כשמתחילים לבשל
+    try {
+      await user_utils.addToMealPlan(user_id, recipeId);
+    } catch (error) {
+      // אם המתכון כבר קיים במeal plan, זה בסדר - נמשיך
+      if (error.status !== 409) {
+        console.error("Failed to add recipe to meal plan:", error.message);
+      }
     }
 
     res.status(200).send(full_recipe);
@@ -391,6 +401,29 @@ router.put('/me/meal-plan/:recipeId', async (req, res, next) => {
     
     await user_utils.updateMealPlanPosition(user_id, recipe_id, position);
     res.status(200).send({ message: "Recipe position successfully updated" });
+  } catch(error) {
+    if (error.status === 404) {
+      return res.status(404).send({ message: "Recipe not found in meal plan" });
+    }
+    next(error);
+  }
+});
+
+/**
+ * Mark recipe as completed in meal plan
+ */
+router.post('/me/meal-plan/:recipeId/complete', async (req, res, next) => {
+  try {
+    const user_id = req.session.user_id;
+    const recipe_id = req.params.recipeId;
+    
+    await user_utils.markRecipeAsCompleted(user_id, recipe_id);
+    
+    res.status(200).send({ 
+      message: "Recipe marked as completed successfully",
+      recipeId: recipe_id,
+      progress: 100
+    });
   } catch(error) {
     if (error.status === 404) {
       return res.status(404).send({ message: "Recipe not found in meal plan" });

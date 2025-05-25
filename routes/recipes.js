@@ -216,12 +216,63 @@ router.get("/:recipeId/preparation", async (req, res, next) => {
  */
 router.get("/:recipeId", async (req, res, next) => {
   try {
-    const recipe = await recipes_utils.getRecipeDetails(req.params.recipeId);
-    res.send(recipe);
-  } catch (error) {
-    next(error);
+    const recipeId = req.params.recipeId; 
+    const user_id = req.session?.user_id || null; 
+    
+    const [source, recipe_id] = recipeId.split('_');
+    let full_recipe;
+
+    if (source === "s") {
+      // Spoonacular recipe
+      console.log("recipeId:", recipe_id);
+      full_recipe = await recipes_utils.combineInstructionsWithIngredients(recipe_id); 
+      // Self-created recipe
+      const recipe_array = await recipes_utils.getSelfRecipefullDetails(recipe_id);
+      full_recipe = recipe_array[0];
+    } else if (source === "f") {
+      // Family recipe
+      const recipe_array = await recipes_utils.getFamilyRecipefullDetails(recipe_id);
+      full_recipe = recipe_array[0];
+    } else {
+      return res.status(400).send({ message: "Unknown recipe source" });
+    }
+
+    if (!full_recipe) {
+      console.log("hey")
+      return res.status(404).send({ message: "Recipe not found" });
+    }
+
+    // הוסף מידע משתמש אם מחובר
+    if (user_id) {
+      try {
+        // סמן כנצפה
+        await user_utils.markRecipeAsViewed(user_id, recipeId);
+        
+        // הוסף מידע על צפייה ומועדפים
+        const [viewedStatus, favoriteStatus] = await Promise.all([
+          recipes_utils.getViewedStatusForRecipes ? 
+            recipes_utils.getViewedStatusForRecipes(user_id, [recipeId]) : 
+            Promise.resolve({}),
+          recipes_utils.getFavoriteStatusForRecipes ? 
+            recipes_utils.getFavoriteStatusForRecipes(user_id, [recipeId]) : 
+            Promise.resolve({})
+        ]);
+        
+        full_recipe.viewed = viewedStatus[recipeId] || false;
+        full_recipe.isFavorite = favoriteStatus[recipeId] || false;
+      } catch (error) {
+        console.error("Failed to add user data:", error.message);
+      }
+    }
+
+    res.send(full_recipe); 
+    
+  } catch (error) { 
+    console.error("Error retrieving recipe details:", error);
+    res.status(500).send({ message: "Error retrieving recipe details" });
   }
 });
+
 
 
 
