@@ -45,9 +45,8 @@ async function combineInstructionsWithIngredients(recipe_id) {
       getRecipeInformation(recipe_id),
       getAnalyzedInstructions(recipe_id)
     ]);
-
+    
     if (!infoRes || !infoRes.data) {
-      console.log("combine")
       throw { status: 404, message: "Recipe not found" };
     }
 
@@ -100,7 +99,7 @@ async function combineInstructionsWithIngredients(recipe_id) {
 
     // הוספת מידע נוסף מהמתכון
     const preparationInfo = {
-      recipeId: recipe_id,
+      recipeId: "s_"+recipe_id,
       title: infoRes.data.title,
       duration: infoRes.data.readyInMinutes,
       servings: infoRes.data.servings,
@@ -143,7 +142,7 @@ async function getSelfRecipefullDetails(recipe_ids) {
         `);
 
         const formatted = recipes.map(recipe => ({
-            id: "s_"+recipe.recipe_id,
+            id: "m_"+recipe.recipe_id,
             title: recipe.title,
             image: recipe.image,
             duration: recipe.duration,

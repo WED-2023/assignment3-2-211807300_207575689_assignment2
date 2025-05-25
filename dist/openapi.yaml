@@ -526,29 +526,6 @@ paths:
         '404':
           description: Recipe not found
           
-  /recipes/{recipeId}/preparation:
-    get:
-      tags:
-        - recipe
-      summary: Get recipe preparation details
-      description: >
-        Returns detailed preparation instructions for a recipe, including step-by-step instructions 
-        and ingredients needed for each step.
-      parameters:
-        - name: recipeId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Recipe preparation details
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RecipePreparation'
-        '404':
-          description: Recipe not found
 
   /recipes/search:
     get:

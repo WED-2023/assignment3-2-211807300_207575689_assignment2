@@ -173,42 +173,6 @@ router.get("/search", async (req, res, next) => {
 });
 
 
-/**
- * מחזיר הוראות הכנה מפורטות למתכון
- */
-router.get("/:recipeId/preparation", async (req, res, next) => {
-  try {
-    const recipeId = req.params.recipeId;
-    const [source, recipe_id] = recipeId.split('_');
-    const preparationDetails=null;
-    if (source === "s") {
-        // משתמש בפונקציה הקיימת שמשלבת מרכיבים והוראות הכנה
-      preparationDetails = await recipes_utils.combineInstructionsWithIngredients(recipeId);
-    }else if (source === "m") {
-      preparationDetails = await recipes_utils.getSelfRecipeDetails(recipeId);
-    } else if (source === "f") {
-      preparationDetails = await recipes_utils.getFamilyRecipefullDetails(recipeId);
-    }
-
-    // אם המשתמש מחובר, סמן שצפה במתכון
-    if (req.session && req.session.user_id) {
-      const user_id = req.session.user_id;
-      
-      // סימון המתכון כנצפה
-      await user_utils.markRecipeAsViewed(user_id, recipeId);
-    }
-    
-    res.status(200).send(preparationDetails);
-  } catch (error) {
-    // טיפול בשגיאות ספציפיות
-    if (error.response && error.response.status === 404) {
-      res.status(404).send({ message: "Recipe not found", success: false });
-    } else {
-      next(error);
-    }
-  }
-});
-
 
 
 /**
@@ -224,8 +188,8 @@ router.get("/:recipeId", async (req, res, next) => {
 
     if (source === "s") {
       // Spoonacular recipe
-      console.log("recipeId:", recipe_id);
       full_recipe = await recipes_utils.combineInstructionsWithIngredients(recipe_id); 
+    } else if (source === "m") {
       // Self-created recipe
       const recipe_array = await recipes_utils.getSelfRecipefullDetails(recipe_id);
       full_recipe = recipe_array[0];
@@ -238,17 +202,14 @@ router.get("/:recipeId", async (req, res, next) => {
     }
 
     if (!full_recipe) {
-      console.log("hey")
       return res.status(404).send({ message: "Recipe not found" });
     }
 
     // הוסף מידע משתמש אם מחובר
     if (user_id) {
       try {
-        // סמן כנצפה
         await user_utils.markRecipeAsViewed(user_id, recipeId);
         
-        // הוסף מידע על צפייה ומועדפים
         const [viewedStatus, favoriteStatus] = await Promise.all([
           recipes_utils.getViewedStatusForRecipes ? 
             recipes_utils.getViewedStatusForRecipes(user_id, [recipeId]) : 
