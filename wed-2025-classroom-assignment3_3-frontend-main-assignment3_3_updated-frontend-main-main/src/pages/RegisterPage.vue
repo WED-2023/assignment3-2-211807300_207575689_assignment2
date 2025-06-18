@@ -1,160 +1,108 @@
 <template>
-  <div class="container mt-4" style="max-width: 500px;">
-    <h2 class="mb-4">Register</h2>
-    <b-form @submit.prevent="register">
+  <div class="register-page">
+    <h1>Register</h1>
+    <form @submit.prevent="register" @input="v$.$touch()">
       <!-- Username -->
-      <b-form-group label="Username" label-for="username">
-        <b-form-input
-          id="username"
-          v-model="state.username"
-          @blur="v$.username.$touch()"
-        />
-        <b-form-invalid-feedback v-if="v$.username.$error">
-          <div v-if="!v$.username.required">Username is required.</div>
-          <div v-else-if="!v$.username.minLength || !v$.username.maxLength">
-            Username must be 3–8 characters.
-          </div>
-          <div v-else-if="!v$.username.alpha">Username must contain only letters.</div>
-        </b-form-invalid-feedback>
-      </b-form-group>
+      <div class="form-group">
+        <label>Username:</label>
+        <input v-model="state.username" type="text" class="form-control" />
+        <div v-if="v$.username.$error" class="text-danger">
+          <div v-if="v$.username.required.$invalid">Username is required.</div>
+          <div v-if="v$.username.minLength.$invalid">At least 3 characters.</div>
+          <div v-if="v$.username.maxLength.$invalid">At most 8 characters.</div>
+          <div v-if="v$.username.pattern.$invalid">Letters only.</div>
+        </div>
+      </div>
 
       <!-- First Name -->
-      <b-form-group label="First Name" label-for="firstName">
-        <b-form-input
-          id="firstName"
-          v-model="state.first_name"
-          @blur="v$.first_name.$touch()"
-        />
-        <b-form-invalid-feedback v-if="v$.first_name.$error">
-          First name is required.
-        </b-form-invalid-feedback>
-      </b-form-group>
+      <div class="form-group">
+        <label>First Name:</label>
+        <input v-model="state.first_name" type="text" class="form-control" />
+        <div v-if="v$.first_name.$error" class="text-danger">First name is required.</div>
+      </div>
 
       <!-- Last Name -->
-      <b-form-group label="Last Name" label-for="lastName">
-        <b-form-input
-          id="lastName"
-          v-model="state.last_name"
-          @blur="v$.last_name.$touch()"
-        />
-        <b-form-invalid-feedback v-if="v$.last_name.$error">
-          Last name is required.
-        </b-form-invalid-feedback>
-      </b-form-group>
-
-      <!-- Email -->
-      <b-form-group label="Email" label-for="email">
-        <b-form-input
-          id="email"
-          type="email"
-          v-model="state.email"
-          @blur="v$.email.$touch()"
-        />
-        <b-form-invalid-feedback v-if="v$.email.$error">
-          <div v-if="!v$.email.required">Email is required.</div>
-          <div v-else-if="!v$.email.email">Invalid email address.</div>
-        </b-form-invalid-feedback>
-      </b-form-group>
+      <div class="form-group">
+        <label>Last Name:</label>
+        <input v-model="state.last_name" type="text" class="form-control" />
+        <div v-if="v$.last_name.$error" class="text-danger">Last name is required.</div>
+      </div>
 
       <!-- Country -->
-      <b-form-group label="Country" label-for="country">
-        <b-form-select
-          id="country"
-          v-model="state.country"
-          :options="countries"
-          @change="v$.country.$touch()"
-        />
-        <b-form-invalid-feedback v-if="v$.country.$error">
-          Country is required.
-        </b-form-invalid-feedback>
-      </b-form-group>
-
-      <!-- Profile Pic URL -->
-      <b-form-group label="Profile Picture URL" label-for="profilePic">
-        <b-form-input
-          id="profilePic"
-          v-model="state.profilePic"
-        />
-      </b-form-group>
+      <div class="form-group">
+        <label>Country:</label>
+        <select v-model="state.country" class="form-control">
+          <option disabled value="">Please select a country</option>
+          <option v-for="country in countries" :key="country" :value="country">
+            {{ country }}
+          </option>
+        </select>
+        <div v-if="v$.country.$error" class="text-danger">Country is required.</div>
+      </div>
 
       <!-- Password -->
-      <b-form-group label="Password" label-for="password">
-        <b-form-input
-          id="password"
-          type="password"
-          v-model="state.password"
-          @blur="v$.password.$touch()"
-        />
-        <b-form-invalid-feedback v-if="v$.password.$error">
-          <div v-if="!v$.password.required">Password is required.</div>
-          <div v-else-if="!v$.password.minLength || !v$.password.maxLength">
-            Password must be 5–10 characters.
-          </div>
-          <div v-else-if="!v$.password.strongPassword">
-            Must include uppercase, lowercase, number, and symbol.
-          </div>
-        </b-form-invalid-feedback>
-      </b-form-group>
+      <div class="form-group">
+        <label>Password:</label>
+        <input :type="showPasswords ? 'text' : 'password'" v-model="state.password" class="form-control" />
+        <div v-if="v$.password.$error" class="text-danger mt-1">
+          <div v-if="v$.password.required.$invalid">Password is required.</div>
+          <div v-if="v$.password.minLength.$invalid">At least 5 characters.</div>
+          <div v-if="v$.password.maxLength.$invalid">At most 10 characters.</div>
+          <div v-if="v$.password.pattern.$invalid">Include number & special char.</div>
+        </div>
+      </div>
 
       <!-- Confirm Password -->
-      <b-form-group label="Confirm Password" label-for="confirmedPassword">
-        <b-form-input
-          id="confirmedPassword"
-          type="password"
-          v-model="state.confirmedPassword"
-          @blur="v$.confirmedPassword.$touch()"
-        />
-        <b-form-invalid-feedback v-if="v$.confirmedPassword.$error">
-          <div v-if="!v$.confirmedPassword.required">Confirmation is required.</div>
-          <div v-else-if="!v$.confirmedPassword.sameAsPassword">
-            Passwords do not match.
-          </div>
-        </b-form-invalid-feedback>
-      </b-form-group>
-
-      <b-button type="submit" variant="success" class="w-100">Register</b-button>
-
-      <b-alert
-        variant="danger"
-        class="mt-3"
-        dismissible
-        v-if="state.submitError"
-        show
-      >
-        Registration failed: {{ state.submitError }}
-      </b-alert>
-
-      <div class="mt-2">
-        Already have an account?
-        <router-link to="/login">Login here</router-link>
+      <div class="form-group">
+        <label>Confirm Password:</label>
+        <input :type="showPasswords ? 'text' : 'password'" v-model="state.confirm_password" class="form-control" />
+        <div v-if="v$.confirm_password.$error" class="text-danger mt-1">
+          <div v-if="v$.confirm_password.required.$invalid">Please confirm your password.</div>
+          <div v-if="v$.confirm_password.sameAsPassword.$invalid">Passwords do not match.</div>
+        </div>
       </div>
-    </b-form>
+
+      <!-- Show Password Checkbox -->
+      <div class="form-check mt-2 mb-3">
+        <input type="checkbox" id="showPasswords" class="form-check-input" v-model="showPasswords" />
+        <label for="showPasswords" class="form-check-label">Show password</label>
+      </div>
+
+      <!-- Email -->
+      <div class="form-group">
+        <label>Email:</label>
+        <input v-model="state.email" type="email" class="form-control" />
+        <div v-if="v$.email.$error" class="text-danger">
+          <div v-if="v$.email.required.$invalid">Email is required.</div>
+          <div v-if="v$.email.email.$invalid">Invalid email.</div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-success mt-3">Register</button>
+    </form>
   </div>
 </template>
 
 <script>
-import { reactive } from 'vue';
+import axios from 'axios';
+import { reactive, ref, computed, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { useVuelidate } from '@vuelidate/core';
-import { required, minLength, maxLength, alpha, sameAs, email as emailRule, helpers } from '@vuelidate/validators';
-import rawCountries from '../assets/countries';
-
-const strongPassword = helpers.regex(
-  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{5,10}$/
-);
+import { required, minLength, maxLength, email, sameAs, helpers } from '@vuelidate/validators';
 
 export default {
   name: 'RegisterPage',
   setup() {
+    const router = useRouter();
     const state = reactive({
       username: '',
       first_name: '',
       last_name: '',
-      email: '',
-      profilePic: '',
-      password: '',
-      confirmedPassword: '',
       country: '',
-      submitError: null,
+      password: '',
+      confirm_password: '',
+      email: '',
+      profilePic: undefined
     });
 
     const rules = {
@@ -162,55 +110,81 @@ export default {
         required,
         minLength: minLength(3),
         maxLength: maxLength(8),
-        alpha,
+        pattern: helpers.regex(/^[A-Za-z]+$/)
       },
       first_name: { required },
       last_name: { required },
-      email: { required, email: emailRule },
       country: { required },
-      profilePic: {},
       password: {
         required,
         minLength: minLength(5),
         maxLength: maxLength(10),
-        strongPassword,
+        pattern: helpers.regex(/^(?=.*\d)(?=.*[^A-Za-z0-9]).+$/)
       },
-      confirmedPassword: {
+      confirm_password: {
         required,
-        sameAsPassword: sameAs(() => state.password),
+        sameAsPassword: sameAs(computed(() => state.password))
       },
+      email: {
+        required,
+        email
+      }
     };
 
     const v$ = useVuelidate(rules, state);
+    const countries = ref([]);
+    const showPasswords = ref(false);
+
+    onMounted(async () => {
+      try {
+        const response = await fetch("https://restcountries.com/v3.1/all?fields=name");
+        const data = await response.json();
+        countries.value = data.map(c => c.name.common).sort();
+      } catch (error) {
+        console.error("Failed to load countries", error);
+      }
+    });
 
     const register = async () => {
-      const valid = await v$.value.$validate();
-      if (!valid) return;
-
-      try {
-        await window.axios.post('/register', {
-          username: state.username,
-          first_name: state.first_name,
-          last_name: state.last_name,
-          email: state.email,
-          profilePic: state.profilePic,
-          password: state.password,
-          confirm_password: state.confirmedPassword,
-          country: state.country,
-        });
-        window.toast('Registration successful', 'You can now login', 'success');
-        window.router.push('/login');
-      } catch (err) {
-        state.submitError = err.response?.data?.message || 'Unexpected error.';
+      if (await v$.value.$validate()) {
+        try {
+          console.log("Sending data:", state);
+          await axios.post("/Register", {
+            username: state.username,
+            first_name: state.first_name,
+            last_name: state.last_name,
+            country: state.country,
+            password: state.password,
+            confirm_password: state.confirm_password,
+            email: state.email,
+            profilePic: state.profilePic
+          });
+          alert("Registration successful!");
+          router.push("/login");
+        } catch (err) {
+          if (err.response?.status === 409) {
+            alert("Username already exists. Please choose a different username.");
+          } else {
+            alert("Registration failed: " + (err.response?.data || err.message));
+          }
+        }
       }
     };
 
     return {
       state,
-      countries: ['Select a country', ...rawCountries],
-      register,
       v$,
+      register,
+      countries,
+      showPasswords
     };
-  },
+  }
 };
 </script>
+
+<style scoped>
+.register-page {
+  max-width: 400px;
+  margin: auto;
+}
+</style>

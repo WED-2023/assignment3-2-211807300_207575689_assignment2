@@ -37,7 +37,7 @@ app.use(
 // CORS setup
 app.use(
   cors({
-    origin: "http://localhost:8080", // Vue dev server origin
+    origin: ["http://localhost:8080", "http://localhost:8081"], // Vue dev server origin
     credentials: true,
   })
 );
