@@ -48,6 +48,8 @@
 </template>
 
 <script>
+import axios from 'axios';
+import { useRouter } from 'vue-router';
 import { reactive } from 'vue';
 import { useVuelidate } from '@vuelidate/core';
 import { required } from '@vuelidate/validators';
@@ -55,6 +57,8 @@ import { required } from '@vuelidate/validators';
 export default {
   name: 'LoginPage',
   setup() {
+    const router = useRouter();
+
     const state = reactive({
       username: '',
       password: '',
@@ -77,18 +81,26 @@ export default {
       if (!valid) return;
 
       try {
-        await window.axios.post('/login', {
+          await axios.post('/login', {
           username: state.username,
           password: state.password,
         });
-        window.store.login(state.username);
-        window.router.push('/main');
+
+        // אפשרות: שמירת מצב התחברות ב־store אם קיים
+        // store.commit('login', state.username);
+
+        router.push('/');
       } catch (err) {
         state.submitError = err.response?.data?.message || 'Unexpected error.';
       }
     };
 
-    return { state, v$, login, getValidationState };
+    return {
+      state,
+      v$,
+      login,
+      getValidationState
+    };
   },
 };
 </script>

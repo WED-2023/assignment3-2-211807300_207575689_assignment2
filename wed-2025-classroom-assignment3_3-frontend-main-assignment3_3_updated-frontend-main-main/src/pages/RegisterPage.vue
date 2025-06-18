@@ -165,7 +165,7 @@ export default {
           if (err.response?.status === 409) {
             alert("Username already exists. Please choose a different username.");
           } else {
-            alert("Registration failed: " + (err.response?.data || err.message));
+            alert("Registration failed: " + JSON.stringify(err.response?.data || err.message));
           }
         }
       }
