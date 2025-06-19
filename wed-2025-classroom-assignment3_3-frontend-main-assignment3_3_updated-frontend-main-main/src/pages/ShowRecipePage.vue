@@ -10,7 +10,7 @@
       <div class="icons mb-3">
         <p>
           <strong>⏰</strong> {{ recipe.duration }} min &nbsp;
-          
+
           <strong>👍</strong> {{ recipe.likes }} &nbsp;
 
           <span v-if="recipe.vegan" class="diet-icon" title="טבעוני">🌱</span>
@@ -54,6 +54,7 @@ const error = ref(null);
 onMounted(async () => {
   try {
     const res = await axios.get(`/recipes/${recipeId}`);
+    console.log('✔️ קיבלנו מתכון מהשרת:', res.data); // ← הוסיפי את זה כאן
     recipe.value = res.data;
   } catch (err) {
     console.error(err);
@@ -62,6 +63,7 @@ onMounted(async () => {
     loading.value = false;
   }
 });
+
 </script>
 
 <style scoped>
