@@ -2,7 +2,6 @@ import Main from "../pages/MainPage.vue";
 import NotFound from "../pages/NotFoundPage.vue";
 import RandomRecipes from "../pages/RandomRecipes.vue";
 
-
 const routes = [
   {
     path: "/",
@@ -30,15 +29,40 @@ const routes = [
     component: () => import("../pages/RecipeViewPage.vue"),
   },
   {
-    path: "/:catchAll(.*)",
-    name: "notFound",
-    component: NotFound,
-  },
-  {
     path: "/recipes/explore",
     name: "random",
     component: RandomRecipes,
   },
+  {
+    path: "/me/favorites",
+    name: "Favorites",
+    component: () => import("../pages/FavoritesPage.vue")
+  },
+  {
+    path: "/me/my-recipes",
+    name: "MyRecipes", 
+    component: () => import("../pages/MyRecipesPage.vue")
+  },
+  {
+    path: "/me/family-recipes",
+    name: "FamilyRecipes",
+    component: () => import("../pages/FamilyRecipesPage.vue")
+  },
+  {
+    path: "/me/add-my-recipe",
+    name: "AddMyRecipes", 
+    component: () => import("../pages/AddMyRecipesPage.vue")
+  },
+  {
+    path: "/me/add-family-recipe",
+    name: "AddFamilyRecipes",
+    component: () => import("../pages/AddFamilyRecipesPage.vue")
+  },
+  {
+    path: "/:catchAll(.*)",
+    name: "notFound",
+    component: NotFound,
+  }
 ];
 
 export default routes;
