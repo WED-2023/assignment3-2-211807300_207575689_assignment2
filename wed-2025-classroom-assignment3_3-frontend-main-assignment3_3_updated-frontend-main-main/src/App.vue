@@ -18,7 +18,7 @@
 </template>
 
 <script>
-import { getCurrentInstance } from 'vue';
+import { getCurrentInstance, onMounted } from 'vue';
 
 export default {
   name: "App",
@@ -28,8 +28,17 @@ export default {
     const toast = internalInstance.appContext.config.globalProperties.toast;
     const router = internalInstance.appContext.config.globalProperties.$router;
 
+    // ✅ טוען את המשתמש מה-localStorage אם קיים
+    onMounted(() => {
+      const savedUsername = localStorage.getItem('loggedInUser');
+      if (savedUsername && !store.username) {
+        store.login(savedUsername);
+      }
+    });
+
     const logout = () => {
       store.logout();
+      localStorage.removeItem('loggedInUser'); // מנקה גם מה-localStorage
       toast("Logout", "User logged out successfully", "success");
       router.push("/").catch(() => {});
     };
@@ -41,7 +50,6 @@ export default {
 
 <style lang="scss">
 @use "@/scss/form-style.scss" as *;
-
 
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;

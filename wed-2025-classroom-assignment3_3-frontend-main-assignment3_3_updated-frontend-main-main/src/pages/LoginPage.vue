@@ -1,64 +1,62 @@
 <template>
-  <div class="container mt-4" style="max-width: 400px;">
-    <h2 class="mb-4">Login</h2>
-    <b-form @submit.prevent="login">
-      <!-- Username -->
-      <b-form-group label="Username" label-for="username">
-        <b-form-input
-          id="username"
-          v-model="state.username"
-          :state="getValidationState(v$.username)"
-        />
-        <b-form-invalid-feedback v-if="v$.username.$error">
-          Username is required.
-        </b-form-invalid-feedback>
-      </b-form-group>
+  <div class="login-page">
+    <div class="image-container">
+  <!-- אפשרות עתידית לתמונה רקע: <img src="@/assets/login-image.webp" alt="Login Illustration" /> -->
+    </div>
+    <div class="form-container">
+      <h1 class="title">Login</h1>
+      <b-form @submit.prevent="login">
+        <b-form-group label="Username:" label-for="username">
+          <b-form-input
+            id="username"
+            v-model="state.username"
+            :state="v$.username.$dirty ? !v$.username.$invalid : null"
+            @blur="v$.username.$touch()"
+          />
+          <b-form-invalid-feedback v-if="v$.username.$error">
+            Username is required
+          </b-form-invalid-feedback>
+        </b-form-group>
 
-      <!-- Password -->
-      <b-form-group label="Password" label-for="password">
-        <b-form-input
-          id="password"
-          type="password"
-          v-model="state.password"
-          :state="getValidationState(v$.password)"
-        />
-        <b-form-invalid-feedback v-if="v$.password.$error">
-          Password is required.
-        </b-form-invalid-feedback>
-      </b-form-group>
+        <b-form-group label="Password:" label-for="password">
+          <b-form-input
+            id="password"
+            type="password"
+            v-model="state.password"
+            :state="v$.password.$dirty ? !v$.password.$invalid : null"
+            @blur="v$.password.$touch()"
+          />
+          <b-form-invalid-feedback v-if="v$.password.$error">
+            Password is required
+          </b-form-invalid-feedback>
+        </b-form-group>
 
-      <b-button type="submit" variant="primary" class="w-100">Login</b-button>
+        <b-button type="submit" variant="primary" class="w-100">Login</b-button>
 
-      <b-alert
-        variant="danger"
-        class="mt-3"
-        dismissible
-        v-if="state.submitError"
-        show
-      >
-        Login failed: {{ state.submitError }}
-      </b-alert>
+        <div class="mt-2 text-center">
+          Don’t have an account?
+          <router-link to="/register">Register here</router-link>
+        </div>
 
-      <div class="mt-2">
-        Don’t have an account?
-        <router-link to="/register">Register here</router-link>
-      </div>
-    </b-form>
+        <b-alert class="mt-2" v-if="state.submitError" variant="danger" dismissible show>
+          Login failed: {{ state.submitError }}
+        </b-alert>
+      </b-form>
+    </div>
   </div>
 </template>
 
 <script>
-import axios from 'axios';
-import { useRouter } from 'vue-router';
 import { reactive } from 'vue';
+import { useRouter } from 'vue-router';
 import { useVuelidate } from '@vuelidate/core';
 import { required } from '@vuelidate/validators';
+import axios from 'axios';
 
 export default {
   name: 'LoginPage',
   setup() {
     const router = useRouter();
-
     const state = reactive({
       username: '',
       password: '',
@@ -72,26 +70,28 @@ export default {
 
     const v$ = useVuelidate(rules, state);
 
-    const getValidationState = (field) => {
-      return field.$dirty ? !field.$invalid : null;
-    };
-
     const login = async () => {
       const valid = await v$.value.$validate();
       if (!valid) return;
 
       try {
-          await axios.post('/login', {
+        const response = await axios.post('/login', {
           username: state.username,
           password: state.password,
         });
 
-        // אפשרות: שמירת מצב התחברות ב־store אם קיים
-        // store.commit('login', state.username);
-
-        router.push('/');
-      } catch (err) {
-        state.submitError = err.response?.data?.message || 'Unexpected error.';
+        if (response?.data?.success) {
+          localStorage.setItem('loggedInUser', state.username);
+          if (window.store) {
+            window.store.login(state.username);
+          }
+          router.push('/');
+        } else {
+          state.submitError = response?.data?.message || 'Invalid login.';
+        }
+      } catch (error) {
+        console.error('Login error:', error);
+        state.submitError = error.response?.data?.message || 'Unexpected error occurred.';
       }
     };
 
@@ -99,8 +99,66 @@ export default {
       state,
       v$,
       login,
-      getValidationState
     };
   },
 };
 </script>
+
+<style scoped lang="scss">
+.login-page {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.image-container {
+  flex: 1;
+  background-color: #f8f9fa;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.form-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 40px;
+
+  .title {
+    text-align: center;
+    color: #9168b3;
+    font-size: 4em;
+    font-weight: bold;
+  }
+
+  .b-form-group {
+    margin-bottom: 1rem;
+  }
+
+  .b-form-group > label {
+    font-weight: bold;
+  }
+
+  .b-form-input, .b-form-select {
+    margin-top: 0.5rem;
+  }
+
+  .b-button {
+    width: 100%;
+    padding: 10px;
+  }
+
+  .b-alert {
+    margin-top: 1rem;
+  }
+
+  .text-center {
+    text-align: center;
+  }
+}
+</style>
