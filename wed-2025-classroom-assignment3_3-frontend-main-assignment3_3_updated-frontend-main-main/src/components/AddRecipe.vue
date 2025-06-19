@@ -16,8 +16,14 @@
       <b-form-input id="servings" type="number" v-model.number="recipe.servings"></b-form-input>
     </b-form-group>
 
-    <b-form-group label="Ingredients (comma-separated)" label-for="ingredients">
-      <b-form-textarea id="ingredients" v-model="ingredientsText"></b-form-textarea>
+    <b-form-group label="Ingredients">
+      <div v-for="(ing, index) in recipe.ingredients" :key="index" class="d-flex mb-2 align-items-center">
+        <b-form-input v-model="ing.name" placeholder="Name" class="me-2" />
+        <b-form-input v-model.number="ing.amount" type="number" placeholder="Amount" class="me-2" />
+        <b-form-input v-model="ing.unit" placeholder="Unit" class="me-2" />
+        <b-button variant="danger" @click="removeIngredient(index)">✕</b-button>
+      </div>
+      <b-button variant="outline-primary" size="sm" @click="addIngredient">+ Add Ingredient</b-button>
     </b-form-group>
 
     <b-form-group label="Instructions (line per step)" label-for="instructions">
@@ -49,7 +55,6 @@ export default {
   },
   data() {
     return {
-      ingredientsText: this.modelValue.ingredients?.map(i => i.name).join(", ") || "",
       instructionsText: this.modelValue.instructions?.map(i => i.step).join("\n") || "",
     };
   },
@@ -65,17 +70,18 @@ export default {
   },
   methods: {
     handleSubmit() {
-      this.recipe.ingredients = this.ingredientsText
-        .split(",")
-        .map(i => ({ name: i.trim() }))
-        .filter(i => i.name);
-
       this.recipe.instructions = this.instructionsText
         .split("\n")
         .map((step, index) => ({ number: index + 1, step: step.trim() }))
         .filter(i => i.step);
 
       this.onSubmit(this.recipe);
+    },
+    addIngredient() {
+      this.recipe.ingredients.push({ name: '', amount: null, unit: '' });
+    },
+    removeIngredient(index) {
+      this.recipe.ingredients.splice(index, 1);
     }
   }
 };

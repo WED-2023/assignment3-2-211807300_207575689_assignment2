@@ -23,7 +23,7 @@ import AddRecipe from '@/components/AddRecipe.vue';
 export default {
   name: 'AddFamilyRecipe',
   components: { AddRecipe },
-  setup(_, { root }) {
+  setup() {
     const newRecipe = reactive({
       title: '',
       image: '',
@@ -42,7 +42,7 @@ export default {
       try {
         await axios.post('/users/me/family-recipes', recipe);
         alert('Recipe added successfully!');
-        root.$router.push('/family-recipes');
+        
       } catch (err) {
         console.error('Error adding recipe:', err);
         alert('Failed to add recipe');
