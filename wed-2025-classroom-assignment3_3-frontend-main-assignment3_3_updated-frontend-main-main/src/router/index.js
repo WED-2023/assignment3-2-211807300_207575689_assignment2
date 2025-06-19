@@ -1,5 +1,7 @@
 import Main from "../pages/MainPage.vue";
 import NotFound from "../pages/NotFoundPage.vue";
+import RandomRecipes from "../pages/RandomRecipes.vue";
+
 
 const routes = [
   {
@@ -31,7 +33,12 @@ const routes = [
     path: "/:catchAll(.*)",
     name: "notFound",
     component: NotFound,
-  }
+  },
+  {
+    path: "/recipes/explore",
+    name: "random",
+    component: RandomRecipes,
+  },
 ];
 
 export default routes;

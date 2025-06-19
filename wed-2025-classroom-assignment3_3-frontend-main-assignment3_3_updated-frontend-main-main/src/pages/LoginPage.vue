@@ -47,62 +47,66 @@
 </template>
 
 <script>
-import { reactive } from 'vue';
+import { getCurrentInstance, reactive } from 'vue';
 import { useRouter } from 'vue-router';
 import { useVuelidate } from '@vuelidate/core';
 import { required } from '@vuelidate/validators';
 import axios from 'axios';
 
+
+
+
 export default {
   name: 'LoginPage',
   setup() {
-    const router = useRouter();
-    const state = reactive({
-      username: '',
-      password: '',
-      submitError: null,
-    });
+  const router = useRouter();
+  const internalInstance = getCurrentInstance();
+  const store = internalInstance.appContext.config.globalProperties.store;
 
-    const rules = {
-      username: { required },
-      password: { required },
-    };
+  const state = reactive({
+    username: '',
+    password: '',
+    submitError: null,
+  });
 
-    const v$ = useVuelidate(rules, state);
+  const rules = {
+    username: { required },
+    password: { required },
+  };
 
-    const login = async () => {
-      const valid = await v$.value.$validate();
-      if (!valid) return;
+  const v$ = useVuelidate(rules, state);
 
-      try {
-        const response = await axios.post('/login', {
-          username: state.username,
-          password: state.password,
-        });
+  const login = async () => {
+    const valid = await v$.value.$validate();
+    if (!valid) return;
 
-        if (response?.data?.success) {
-          localStorage.setItem('loggedInUser', state.username);
-          if (window.store) {
-            window.store.login(state.username);
-          }
-          router.push('/');
-        } else {
-          state.submitError = response?.data?.message || 'Invalid login.';
-        }
-      } catch (error) {
-        console.error('Login error:', error);
-        state.submitError = error.response?.data?.message || 'Unexpected error occurred.';
+    try {
+      const response = await axios.post('/login', {
+        username: state.username,
+        password: state.password,
+      });
+
+      if (response?.data?.success) {
+        localStorage.setItem('loggedInUser', state.username);
+        store.login(state.username);  // ✅ עובד עם ה־store הגלובלי
+        router.push('/');
+      } else {
+        state.submitError = response?.data?.message || 'Invalid login.';
       }
-    };
+    } catch (error) {
+      state.submitError = error.response?.data?.message || 'Unexpected error occurred.';
+    }
+  };
 
-    return {
-      state,
-      v$,
-      login,
-    };
-  },
+  return {
+    state,
+    v$,
+    login,
+  };
+}
 };
 </script>
+
 
 <style scoped lang="scss">
 .login-page {
