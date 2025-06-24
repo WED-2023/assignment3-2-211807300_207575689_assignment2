@@ -1,13 +1,18 @@
 <template>
   <div id="app">
     <div id="nav">
-      <router-link :to="{ name: 'main' }">Vue Recipes</router-link> |
+      <router-link :to="{ name: 'main' }">Vue Recipes</router-link>
+      <span class="separator">|</span>
       <router-link :to="{ name: 'search' }">Search</router-link>
+      <span class="separator">|</span>
+      <router-link :to="{ name: 'About' }">About</router-link>
       
       <!-- Dropdown Menu -->
       <template v-if="store.username">
-        |
-        <div class="dropdown">
+        <span class="separator">|</span>
+        <router-link to="/me/add-my-recipe" class="nav-link">Add Recipe</router-link>
+        <span class="separator">|</span>
+        <span class="dropdown">
           <button @click="toggleDropdown" class="dropdown-btn">
             Personal Area ▼
           </button>
@@ -16,16 +21,22 @@
             <router-link :to="{ name: 'MyRecipes' }" @click="closeDropdown">My Recipes</router-link>
             <router-link :to="{ name: 'FamilyRecipes' }" @click="closeDropdown">My Family Recipes</router-link>
           </div>
-        </div>
-        |
-        {{ store.username }}:
-        <button @click="logout" class="btn btn-link p-0">Logout</button>
+        </span>
+        <span class="separator">|</span>
+        <span class="user-info">
+          {{ store.username }}:
+          <button @click="logout" class="btn btn-link p-0">Logout</button>
+        </span>
       </template>
-      
+
       <template v-else>
-        | Guest:
-        <router-link :to="{ name: 'register' }">Register</router-link> |
-        <router-link :to="{ name: 'login' }">Login</router-link>
+        <span class="separator">|</span>
+        <span class="guest-info">
+          Guest:
+          <router-link :to="{ name: 'register' }">Register</router-link>
+          <span class="separator">|</span>
+          <router-link :to="{ name: 'login' }">Login</router-link>
+        </span>
       </template>
     </div>
     <router-view />
@@ -103,16 +114,34 @@ export default {
 
 #nav {
   padding: 30px;
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap; /* מונע שבירת שורה */
+  gap: 8px; /* רווחים קטנים ואחידים */
+  white-space: nowrap; /* מונע שבירת טקסט */
 }
 
 #nav a {
   font-weight: bold;
   color: #2c3e50;
   text-decoration: none;
+  white-space: nowrap; /* מונע שבירת הקישורים */
 }
 
 #nav a.router-link-exact-active {
   color: #42b983;
+}
+
+.separator {
+  color: #2c3e50;
+  margin: 0 4px; /* רווח קטן מסביב למפרידים */
+}
+
+.user-info, .guest-info {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
 }
 
 .dropdown {
@@ -128,6 +157,7 @@ export default {
   cursor: pointer;
   padding: 0;
   font-size: inherit;
+  white-space: nowrap;
 }
 
 .dropdown-btn:hover {
@@ -141,7 +171,7 @@ export default {
   background-color: white;
   min-width: 200px;
   box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-  z-index: 1;
+  z-index: 1000; /* z-index גבוה יותר */
   border-radius: 4px;
   overflow: hidden;
   margin-top: 5px;
@@ -153,6 +183,7 @@ export default {
   text-decoration: none;
   display: block;
   border-bottom: 1px solid #f1f1f1;
+  white-space: nowrap;
 }
 
 .dropdown-content a:last-child {
@@ -162,5 +193,17 @@ export default {
 .dropdown-content a:hover {
   background-color: #f1f1f1;
   color: #42b983;
+}
+
+/* תגובה למסכים קטנים */
+@media (max-width: 768px) {
+  #nav {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  
+  .dropdown-content {
+    min-width: 180px;
+  }
 }
 </style>
