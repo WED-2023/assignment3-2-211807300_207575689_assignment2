@@ -9,6 +9,9 @@
 
       <div class="icons mb-3">
         <p>
+
+          <strong>🍽</strong> {{ recipe.servings }} &nbsp;
+
           <strong>⏰</strong> {{ recipe.duration }} min &nbsp;
 
           <strong>👍</strong> {{ recipe.likes }} &nbsp;

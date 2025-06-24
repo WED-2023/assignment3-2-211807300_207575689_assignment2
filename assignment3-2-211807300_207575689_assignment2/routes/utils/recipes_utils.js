@@ -49,6 +49,7 @@ async function combineInstructionsWithIngredients(recipe_id) {
     if (!infoRes || !infoRes.data) {
       throw { status: 404, message: "Recipe not found" };
     }
+    let {title, readyInMinutes, image, aggregateLikes, vegan, vegetarian, glutenFree } = infoRes.data;
 
     // שלב 1: איסוף כל המצרכים עם כמות ויחידה
     const extendedIngredients = infoRes.data.extendedIngredients || [];
@@ -100,11 +101,17 @@ async function combineInstructionsWithIngredients(recipe_id) {
     // הוספת מידע נוסף מהמתכון
     const preparationInfo = {
       recipeId: "s_"+recipe_id,
-      title: infoRes.data.title,
-      duration: infoRes.data.readyInMinutes,
+      likes: aggregateLikes,
+      image: image,
+      title: title,
+      duration: readyInMinutes,
       servings: infoRes.data.servings,
+      vegan: vegan === 1,
+      vegetarian: vegetarian === 1,
+      glutenFree: glutenFree === 1,
       ingredients: ingredients,
       instructions: instructions
+      
     };
 
     return preparationInfo;
@@ -480,3 +487,5 @@ exports.getFamilyRecipefullDetails = getFamilyRecipefullDetails;
 exports.getSelfRecipefullDetails = getSelfRecipefullDetails;
 exports.combineInstructionsWithIngredients = combineInstructionsWithIngredients;
 exports.searchRecipes = searchRecipes;
+exports.getViewedStatusForRecipes=getViewedStatusForRecipes;
+exports.getFavoriteStatusForRecipes=getFavoriteStatusForRecipes;

@@ -57,21 +57,31 @@ router.get("/preview", async (req, res, next) => {
     if (req.session && req.session.user_id) {
       const user_id = req.session.user_id;
       
-      // מקבל מתכונים שנצפו ומועדפים
-      const [viewed_recipes, favorite_recipes] = await Promise.all([
-        user_utils.getLastViewedRecipes(user_id, 100), // מקבל יותר כדי לכסות את כל המתכונים שיכולים להיות בתצוגה
-        user_utils.getFavoriteRecipes(user_id)
-      ]);
-      
-      // ממפה מזהים למערכים לחיפוש מהיר
-      const viewed_recipe_ids = new Set(viewed_recipes.map(r => r.recipe_id.toString()));
-      const favorite_recipe_ids = new Set(favorite_recipes.map(r => r.recipe_id.toString()));
-      
-      // מוסיף מידע לכל מתכון
-      recipes.forEach(recipe => {
-        recipe.viewed = viewed_recipe_ids.has(recipe.id.toString());
-        recipe.isFavorite = favorite_recipe_ids.has(recipe.id.toString());
-      });
+      try {
+        // מקבל את מזהי המתכונים לבדיקה
+        const recipe_ids = recipes.map(recipe => recipe.id.toString());
+        
+        // בדיקת סטטוס צפייה ומועדפים באמצעות הפונקציות הקיימות
+        const [viewedStatus, favoriteStatus] = await Promise.all([
+          recipes_utils.getViewedStatusForRecipes ? 
+            recipes_utils.getViewedStatusForRecipes(user_id, recipe_ids) : 
+            Promise.resolve({}),
+          recipes_utils.getFavoriteStatusForRecipes ? 
+            recipes_utils.getFavoriteStatusForRecipes(user_id, recipe_ids) : 
+            Promise.resolve({})
+        ]);
+        
+        // הוספת המידע לכל מתכון
+        recipes.forEach(recipe => {
+          const recipeId = recipe.id.toString();
+          recipe.viewed = viewedStatus[recipeId] || false;
+          recipe.isFavorite = favoriteStatus[recipeId] || false;
+        });
+        
+      } catch (error) {
+        console.error("Failed to add user data for preview:", error.message);
+        // במקרה של שגיאה, ממשיכים בלי המידע הנוסף
+      }
     }
     
     res.send(recipes);
@@ -92,21 +102,31 @@ router.get("/explore", async (req, res, next) => {
     if (req.session && req.session.user_id) {
       const user_id = req.session.user_id;
       
-      // מקבל מתכונים שנצפו ומועדפים
-      const [viewed_recipes, favorite_recipes] = await Promise.all([
-        user_utils.getLastViewedRecipes(user_id, 100),
-        user_utils.getFavoriteRecipes(user_id)
-      ]);
-      
-      // ממפה מזהים למערכים לחיפוש מהיר
-      const viewed_recipe_ids = new Set(viewed_recipes.map(r => r.recipe_id.toString()));
-      const favorite_recipe_ids = new Set(favorite_recipes.map(r => r.recipe_id.toString()));
-      
-      // מוסיף מידע לכל מתכון
-      recipes.forEach(recipe => {
-        recipe.viewed = viewed_recipe_ids.has(recipe.id.toString());
-        recipe.isFavorite = favorite_recipe_ids.has(recipe.id.toString());
-      });
+      try {
+        // מקבל את מזהי המתכונים לבדיקה
+        const recipe_ids = recipes.map(recipe => recipe.id.toString());
+        
+        // בדיקת סטטוס צפייה ומועדפים באמצעות הפונקציות הקיימות
+        const [viewedStatus, favoriteStatus] = await Promise.all([
+          recipes_utils.getViewedStatusForRecipes ? 
+            recipes_utils.getViewedStatusForRecipes(user_id, recipe_ids) : 
+            Promise.resolve({}),
+          recipes_utils.getFavoriteStatusForRecipes ? 
+            recipes_utils.getFavoriteStatusForRecipes(user_id, recipe_ids) : 
+            Promise.resolve({})
+        ]);
+        
+        // הוספת המידע לכל מתכון
+        recipes.forEach(recipe => {
+          const recipeId = recipe.id.toString();
+          recipe.viewed = viewedStatus[recipeId] || false;
+          recipe.isFavorite = favoriteStatus[recipeId] || false;
+        });
+        
+      } catch (error) {
+        console.error("Failed to add user data for explore:", error.message);
+        // במקרה של שגיאה, ממשיכים בלי המידע הנוסף
+      }
     }
     
     res.send(recipes);
@@ -204,7 +224,6 @@ router.get("/:recipeId", async (req, res, next) => {
     if (!full_recipe) {
       return res.status(404).send({ message: "Recipe not found" });
     }
-
     // הוסף מידע משתמש אם מחובר
     if (user_id) {
       try {
