@@ -233,7 +233,7 @@ async function getAllRecipesPreviewDetails(user_id=null, recipe_ids) {
       let commonData = {
         id: recipeid,
         viewed: viewedStatusMap[recipeid] || false,
-        favorite: favoriteStatusMap[recipeid] || false
+        isFavorite: favoriteStatusMap[recipeid] || false
       };
 
       try {

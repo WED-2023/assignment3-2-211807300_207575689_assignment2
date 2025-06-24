@@ -44,16 +44,20 @@ export default {
     },
     async handleToggleFavorite(recipeId) {
       try {
-        await axios.post(`/users/me/favorites/${recipeId}`);
-        const r = this.recipes.find((r) => r.id === recipeId);
-        if (r) r.isFavorite = true;
-      } catch (error) {
-        if (error.response?.status === 409) {
-          const r = this.recipes.find((r) => r.id === recipeId);
-          if (r) r.isFavorite = true;
+        const recipe = this.recipes.find((r) => r.id === recipeId);
+        if (!recipe) return;
+        
+        if (recipe.isFavorite) {
+          // הסרה מהמועדפים
+          await axios.delete(`/users/me/favorites/${recipeId}`);
+          recipe.isFavorite = false;
         } else {
-          console.error("Failed to add to favorites:", error);
+          // הוספה למועדפים
+          await axios.post(`/users/me/favorites/${recipeId}`);
+          recipe.isFavorite = true;
         }
+      } catch (error) {
+        console.error("Failed to toggle favorite:", error);
       }
     },
   },

@@ -70,6 +70,7 @@ router.get('/me/last-watched', async (req, res, next) => {
     recipes_id.map((element) => recipes_id_array.push(element.recipe_id));
     
     const results = await recipe_utils.getAllRecipesPreviewDetails(user_id,recipes_id_array);
+    console.log(results)
     res.status(200).send(results);
   } catch(error) {
     next(error);
@@ -198,7 +199,9 @@ router.get('/me/my-recipes', async (req, res, next) => {
     const recipes_id = await user_utils.getSelfRecipe(user_id);
     let recipes_id_array = [];
     recipes_id.map((element) => recipes_id_array.push(element.recipe_id));
-    const results = await recipe_utils.getSelfRecipefullDetails(recipes_id_array);
+    const formatted_recipes_id_array = recipes_id_array.map((id) => `m_${id}`);
+    // const results_a = await recipe_utils.getSelfRecipefullDetails(recipes_id_array);
+    const results = await recipe_utils.getAllRecipesPreviewDetails(user_id,formatted_recipes_id_array);
     res.status(200).send(results);
   } catch(error) {
     next(error); 
@@ -258,7 +261,9 @@ router.get('/me/family-recipes', async (req, res, next) => {
     const recipes_id = await user_utils.getFamilyRecipe(user_id);
     let recipes_id_array = [];
     recipes_id.map((element) => recipes_id_array.push(element.id));
-    const results = await recipe_utils.getFamilyRecipefullDetails(recipes_id_array);
+    const formatted_recipes_id_array = recipes_id_array.map((id) => `f_${id}`);
+    // const results = await recipe_utils.getFamilyRecipefullDetails(recipes_id_array);
+    const results = await recipe_utils.getAllRecipesPreviewDetails(user_id,formatted_recipes_id_array);
     res.status(200).send(results);
   } catch(error) {
     next(error); 

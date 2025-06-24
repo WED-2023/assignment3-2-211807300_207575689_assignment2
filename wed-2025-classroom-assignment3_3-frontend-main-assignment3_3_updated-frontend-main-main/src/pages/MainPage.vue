@@ -3,8 +3,7 @@
     <div class="row">
       <!-- Left Column: Random Recipes -->
       <div class="col-md-6">
-        <h2>Explore These Recipes</h2>
-        <RecipePreviewList :recipes="exploreRecipes" />
+        <RecipePreviewList title="Explore These Recipes" :recipes="exploreRecipes" />
         <div class="text-center mt-3">
           <button class="btn btn-secondary" @click="loadRandomRecipes">Show 3 More</button>
         </div>
@@ -13,8 +12,7 @@
       <!-- Right Column -->
       <div class="col-md-6">
         <div v-if="store.username">
-          <h2>Last Watched Recipes</h2>
-          <RecipePreviewList :recipes="lastWatchedRecipes" />
+          <RecipePreviewList title="Last Watched Recipes" :recipes="lastWatchedRecipes" />
         </div>
         <div v-else class="text-center">
           <h3>Welcome Guest!</h3>

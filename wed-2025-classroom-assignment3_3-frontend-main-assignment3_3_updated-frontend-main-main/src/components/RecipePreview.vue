@@ -53,6 +53,12 @@ export default {
       required: true,
     },
   },
+  mounted() {
+    // כאן הבדיקה!
+    console.log("המתכון שהתקבל:", this.recipe);
+    console.log("האם מועדף:", this.recipe.isFavorite);
+    console.log("האם נצפה:", this.recipe.viewed);
+  },
   methods: {
     markAsViewed() {
       if (!this.recipe.viewed) {
@@ -67,7 +73,6 @@ export default {
 </script>
 
 <style scoped>
-/* נשאר ללא שינוי */
 .recipe-image {
   width: 100%;
   height: 200px;
