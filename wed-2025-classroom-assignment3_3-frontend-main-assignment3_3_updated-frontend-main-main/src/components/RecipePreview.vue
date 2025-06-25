@@ -121,6 +121,7 @@ export default {
 .viewed-indicator {
   position: absolute;
   top: 10px;
+  z-index: 2;
   right: 10px;
   font-size: 22px;
   color: #777;

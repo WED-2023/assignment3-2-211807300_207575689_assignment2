@@ -72,7 +72,24 @@ const routes = [
   path: '/about',
   name: 'About',
   component: () => import('@/pages/AboutPage.vue')
+},
+{
+    path: '/recipes/:recipeId/startcooking',
+    name: 'StartCooking',
+    component: () => import('@/pages/StartCookingPage.vue'),
+    meta: {
+      requiresAuth: true // נדרש להיות מחובר למערכת
+    }
+},
+{
+    path: '/me/meal-plan',
+    name: 'MealPlan',
+    component: () => import('@/pages/MealPlanPage.vue'),
+    meta: {
+      requiresAuth: true // נדרש להיות מחובר למערכת
+    }
 }
+    
 ];
 
 export default routes;

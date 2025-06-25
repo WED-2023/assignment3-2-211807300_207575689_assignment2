@@ -200,6 +200,12 @@ async function getMealPlan(user_id) {
         recipeId: mealPlanItem.recipe_id,
         title: recipeDetail ? recipeDetail.title : 'Unknown Recipe',
         image: recipeDetail ? recipeDetail.image : '',
+        isFavorite:recipeDetail.isFavorite,
+        likes: recipeDetail.likes,
+        vegan:  recipeDetail.vegan,
+        vegetarian: recipeDetail.vegetarian,
+        glutenFree:  recipeDetail.glutenFree,
+        viewed:recipeDetail.viewed,
         duration: recipeDetail ? recipeDetail.duration : 0,
         position: mealPlanItem.position,
         progress: mealPlanItem.progress

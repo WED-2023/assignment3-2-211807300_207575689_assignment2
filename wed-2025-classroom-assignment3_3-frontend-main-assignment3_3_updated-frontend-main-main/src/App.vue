@@ -12,6 +12,20 @@
         <span class="separator">|</span>
         <router-link to="/me/add-my-recipe" class="nav-link">Add Recipe</router-link>
         <span class="separator">|</span>
+        
+        <!-- תכנון ארוחה עם אינדיקציה -->
+        <router-link :to="{ name: 'MealPlan' }" class="nav-link meal-plan-link">
+          <i class="fas fa-calendar-alt"></i>
+          תכנון ארוחה
+          <span v-if="mealPlanCount > 0" class="meal-plan-badge">
+            {{ mealPlanCount }}
+          </span>
+          <span v-if="mealPlanProgress > 0" class="meal-plan-progress">
+            {{ mealPlanProgress }}%
+          </span>
+        </router-link>
+        <span class="separator">|</span>
+        
         <span class="dropdown">
           <button @click="toggleDropdown" class="dropdown-btn">
             Personal Area ▼
@@ -45,6 +59,7 @@
 
 <script>
 import { getCurrentInstance, onMounted, ref, onUnmounted } from 'vue';
+import axios from 'axios';
 
 export default {
   name: "App",
@@ -54,6 +69,8 @@ export default {
     const router = internalInstance.appContext.config.globalProperties.$router;
 
     const showDropdown = ref(false);
+    const mealPlanCount = ref(0);
+    const mealPlanProgress = ref(0);
     
     onMounted(() => {
       const savedUsername = localStorage.getItem('loggedInUser');
@@ -63,11 +80,47 @@ export default {
       
       // Close dropdown when clicking outside
       document.addEventListener('click', handleClickOutside);
+      
+      // Load meal plan data if user is logged in
+      if (store.username || savedUsername) {
+        loadMealPlanData();
+      }
+      
+      // Watch for route changes to update meal plan data
+      router.afterEach(() => {
+        if (store.username) {
+          loadMealPlanData();
+        }
+      });
     });
 
     onUnmounted(() => {
       document.removeEventListener('click', handleClickOutside);
     });
+
+    const loadMealPlanData = async () => {
+      try {
+        const response = await axios.get('/users/me/meal-plan');
+        const mealPlan = response.data;
+        
+        mealPlanCount.value = mealPlan.recipes?.length || 0;
+        
+        if (mealPlanCount.value > 0) {
+          const totalProgress = mealPlan.recipes.reduce((sum, recipe) => 
+            sum + (recipe.progress || 0), 0
+          );
+          mealPlanProgress.value = Math.round(totalProgress / mealPlanCount.value);
+        } else {
+          mealPlanProgress.value = 0;
+        }
+        
+        //console.log(📊 תכנון ארוחה: ${mealPlanCount.value} מתכונים, ${mealPlanProgress.value}% התקדמות);
+      } catch (error) {
+        // אם יש שגיאה (כמו 401), פשוט לא מציגים מידע
+        mealPlanCount.value = 0;
+        mealPlanProgress.value = 0;
+      }
+    };
 
     const toggleDropdown = () => {
       showDropdown.value = !showDropdown.value;
@@ -87,6 +140,8 @@ export default {
     const logout = () => {
       store.logout();
       localStorage.removeItem('loggedInUser');
+      mealPlanCount.value = 0;
+      mealPlanProgress.value = 0;
       router.push("/").catch(() => {});
     };
 
@@ -95,7 +150,10 @@ export default {
       logout, 
       showDropdown, 
       toggleDropdown, 
-      closeDropdown 
+      closeDropdown,
+      mealPlanCount,
+      mealPlanProgress,
+      loadMealPlanData
     };
   }
 }
@@ -116,16 +174,16 @@ export default {
   padding: 30px;
   display: flex;
   align-items: center;
-  flex-wrap: nowrap; /* מונע שבירת שורה */
-  gap: 8px; /* רווחים קטנים ואחידים */
-  white-space: nowrap; /* מונע שבירת טקסט */
+  flex-wrap: nowrap;
+  gap: 8px;
+  white-space: nowrap;
 }
 
 #nav a {
   font-weight: bold;
   color: #2c3e50;
   text-decoration: none;
-  white-space: nowrap; /* מונע שבירת הקישורים */
+  white-space: nowrap;
 }
 
 #nav a.router-link-exact-active {
@@ -134,7 +192,7 @@ export default {
 
 .separator {
   color: #2c3e50;
-  margin: 0 4px; /* רווח קטן מסביב למפרידים */
+  margin: 0 4px;
 }
 
 .user-info, .guest-info {
@@ -142,6 +200,35 @@ export default {
   align-items: center;
   gap: 4px;
   white-space: nowrap;
+}
+
+.meal-plan-link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.meal-plan-badge {
+  background: #dc3545;
+  color: white;
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-weight: bold;
+  min-width: 18px;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.meal-plan-progress {
+  background: #28a745;
+  color: white;
+  font-size: 0.6rem;
+  padding: 1px 4px;
+  border-radius: 8px;
+  font-weight: bold;
+  margin-right: 2px;
 }
 
 .dropdown {
@@ -171,7 +258,7 @@ export default {
   background-color: white;
   min-width: 200px;
   box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-  z-index: 1000; /* z-index גבוה יותר */
+  z-index: 1000;
   border-radius: 4px;
   overflow: hidden;
   margin-top: 5px;
@@ -205,5 +292,11 @@ export default {
   .dropdown-content {
     min-width: 180px;
   }
+  
+  .meal-plan-link {
+    font-size: 0.9rem;
+  }
+  
+
 }
 </style>
