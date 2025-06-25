@@ -106,6 +106,7 @@ const addToMealPlan = async () => {
     // הצגת הודעת הצלחה
     successMessage.value = `המתכון "${recipe.value.title}" נוסף בהצלחה לתכנון הארוחות!`;
     showSuccessMessage.value = true;
+    window.dispatchEvent(new CustomEvent('mealPlanUpdated'));
     
     // הסתרת ההודעה אחרי 4 שניות
     setTimeout(() => {
@@ -137,7 +138,7 @@ const startCooking = async () => {
     startingCooking.value = true;
     
     // Navigate to the cooking preparation page
-    await router.push(`/recipes/${recipeId}/cooking`);
+    await router.push(`/recipes/${recipeId}/startcooking`);
     
   } catch (err) {
     console.error('שגיאה במעבר לדף הכנת המתכון:', err);

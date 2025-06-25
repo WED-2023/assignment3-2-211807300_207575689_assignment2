@@ -225,7 +225,7 @@ const completeRecipe = async () => {
 };
 
 const goBack = () => {
-  router.push(`/recipes/${recipeId}`);
+  router.push(`/me/meal-plan`);
 };
 
 // Lifecycle

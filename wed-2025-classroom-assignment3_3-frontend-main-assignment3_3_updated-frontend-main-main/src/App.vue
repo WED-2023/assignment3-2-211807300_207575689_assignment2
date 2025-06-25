@@ -92,6 +92,9 @@ export default {
           loadMealPlanData();
         }
       });
+      window.addEventListener('mealPlanUpdated', () => {
+        if (store.username) loadMealPlanData();
+      });
     });
 
     onUnmounted(() => {

@@ -185,34 +185,32 @@
                     <i class="fas fa-play"></i>
                     {{ recipe.progress === 100 ? 'הושלם' : 'התחל בישול' }}
                   </button>
-
-                  <!-- Position Controls with Icons -->
+                  
                   <div class="position-controls">
                     <button 
-                      @click="moveRecipeUp(index)"
-                      :disabled="index === 0"
-                      class="btn btn-sm btn-outline-secondary"
-                      title="העבר למעלה">
-                      <i class="fas fa-arrow-up"></i>
+                        @click="moveRecipeUp(index)"
+                        :disabled="index === 0"
+                        class="icon-button"
+                        title="העבר למעלה">
+                        ⬆️
                     </button>
                     <button 
-                      @click="moveRecipeDown(index)"
-                      :disabled="index === sortedRecipes.length - 1"
-                      class="btn btn-sm btn-outline-secondary"
-                      title="העבר למטה">
-                      <i class="fas fa-arrow-down"></i>
+                        @click="moveRecipeDown(index)"
+                        :disabled="index === sortedRecipes.length - 1"
+                        class="icon-button"
+                        title="העבר למטה">
+                        ⬇️
                     </button>
                   </div>
 
-  <!-- Remove Recipe Button with Icon -->
-  <button 
-    @click="removeRecipe(recipe.recipeId, index)"
-    class="btn btn-outline-danger btn-sm"
-    title="הסר מתכנון">
-    <i class="fas fa-trash-alt"></i>
-  </button>
-</div>
+                  <button 
+                    @click="removeRecipe(recipe.recipeId, index)"
+                    class="icon-button text-danger"
+                    title="הסר מתכנון">
+                    🗑️
+                  </button>
 
+                </div>
                 
                 <!-- Quick Actions -->
                 <div class="quick-actions mt-2">
@@ -325,6 +323,7 @@ const removeRecipe = async (recipeId, index) => {
     
     // Remove from local state
     mealPlan.value.recipes.splice(index, 1);
+    window.dispatchEvent(new CustomEvent('mealPlanUpdated'));
     
     console.log(`✔️ מתכון ${recipeId} הוסר מתכנון הארוחה`);
   } catch (err) {
@@ -343,7 +342,7 @@ const clearAllRecipes = async () => {
     await axios.delete('/users/me/meal-plan');
     
     mealPlan.value.recipes = [];
-    
+    window.dispatchEvent(new CustomEvent('mealPlanUpdated'));
     console.log('✔️ תכנון הארוחה נוקה בהצלחה');
   } catch (err) {
     console.error('❌ שגיאה בניקוי תכנון הארוחה:', err);
@@ -382,7 +381,7 @@ const updateRecipePosition = async (recipeId, newPosition) => {
     if (recipe) {
       recipe.position = newPosition;
     }
-    
+    window.dispatchEvent(new CustomEvent('mealPlanUpdated'));
     console.log(`✔️ מיקום מתכון ${recipeId} עודכן ל-${newPosition}`);
   } catch (err) {
     console.error('❌ שגיאה בעדכון מיקום מתכון:', err);
@@ -399,7 +398,7 @@ const markAsCompleted = async (recipeId) => {
     if (recipe) {
       recipe.progress = 100;
     }
-    
+    window.dispatchEvent(new CustomEvent('mealPlanUpdated'));
     console.log(`✔️ מתכון ${recipeId} סומן כהושלם`);
   } catch (err) {
     console.error('❌ שגיאה בסימון מתכון כהושלם:', err);
@@ -408,7 +407,7 @@ const markAsCompleted = async (recipeId) => {
 };
 
 const startCooking = (recipeId) => {
-  router.push(`/me/recipes/${recipeId}/startcooking`);
+  router.push(`/recipes/${recipeId}/startcooking`);
 };
 
 const refreshMealPlan = () => {
@@ -621,6 +620,7 @@ onMounted(() => {
   overflow: hidden;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
 }
 
@@ -674,9 +674,30 @@ onMounted(() => {
   gap: 0.25rem;
 }
 
-.position-controls .btn {
-  padding: 0.25rem 0.5rem;
-  font-size: 0.75rem;
+.icon-button {
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  padding: 0.5rem;
+  cursor: pointer;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.icon-button:hover {
+  transform: scale(1.1);
+}
+
+.icon-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.icon-button:disabled:hover {
+  transform: none;
+}
+
+.position-controls .icon-button {
+  font-size: 1.2rem;
 }
 
 .quick-actions {
