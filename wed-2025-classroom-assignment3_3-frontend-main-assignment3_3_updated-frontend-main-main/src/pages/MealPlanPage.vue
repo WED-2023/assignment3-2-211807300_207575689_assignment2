@@ -185,7 +185,8 @@
                     <i class="fas fa-play"></i>
                     {{ recipe.progress === 100 ? 'הושלם' : 'התחל בישול' }}
                   </button>
-                  
+
+                  <!-- Position Controls with Icons -->
                   <div class="position-controls">
                     <button 
                       @click="moveRecipeUp(index)"
@@ -202,14 +203,16 @@
                       <i class="fas fa-arrow-down"></i>
                     </button>
                   </div>
-                  
-                  <button 
-                    @click="removeRecipe(recipe.recipeId, index)"
-                    class="btn btn-outline-danger btn-sm"
-                    title="הסר מתכנון">
-                    <i class="fas fa-times"></i>
-                  </button>
-                </div>
+
+  <!-- Remove Recipe Button with Icon -->
+  <button 
+    @click="removeRecipe(recipe.recipeId, index)"
+    class="btn btn-outline-danger btn-sm"
+    title="הסר מתכנון">
+    <i class="fas fa-trash-alt"></i>
+  </button>
+</div>
+
                 
                 <!-- Quick Actions -->
                 <div class="quick-actions mt-2">
