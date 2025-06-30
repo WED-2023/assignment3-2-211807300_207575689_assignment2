@@ -1,7 +1,7 @@
 <template>
   <div class="about-container">
     <div class="hero-section">
-      <h1 class="main-title"> Vue Recipes אודות</h1>
+      <h1 class="main-title">אודות</h1>
       <p class="subtitle">פלטפורמה חדשנית לחיפוש, שיתוף ושמירת מתכונים</p>
     </div>
 

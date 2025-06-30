@@ -349,7 +349,7 @@ export default {
   text-align: center;
   margin-bottom: 30px;
   padding: 30px;
-  background: linear-gradient(45deg, #ff6b6b, #ffd93d);
+  background: linear-gradient(45deg,  #42b983 40%, #369870 60%);
   border-radius: 15px;
   color: white;
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
@@ -409,7 +409,7 @@ export default {
 }
 
 .search-btn {
-  background: linear-gradient(45deg, #667eea, #764ba2);
+  background: linear-gradient(45deg, #42b983 40%, #369870 60%);
   color: white;
   border: none;
   padding: 15px 30px;

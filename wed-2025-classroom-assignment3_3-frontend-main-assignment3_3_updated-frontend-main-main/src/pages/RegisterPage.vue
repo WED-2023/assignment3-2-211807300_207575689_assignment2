@@ -1,85 +1,93 @@
 <template>
   <div class="register-page">
-    <h1>Register</h1>
-    <form @submit.prevent="register" @input="v$.$touch()">
-      <!-- Username -->
-      <div class="form-group">
-        <label>Username:</label>
-        <input v-model="state.username" type="text" class="form-control" />
-        <div v-if="v$.username.$error" class="text-danger">
-          <div v-if="v$.username.required.$invalid">Username is required.</div>
-          <div v-if="v$.username.minLength.$invalid">At least 3 characters.</div>
-          <div v-if="v$.username.maxLength.$invalid">At most 8 characters.</div>
-          <div v-if="v$.username.pattern.$invalid">Letters only.</div>
+    <div class="register-container">
+      <h1 class="title">הרשמה</h1>
+     
+      <form @submit.prevent="register" @input="v$.$touch()">
+        <!-- Username -->
+        <div class="form-group">
+          <label>שם משתמש:</label>
+          <input v-model="state.username" type="text" class="form-control" />
+          <div v-if="v$.username.$error" class="text-danger">
+            <div v-if="v$.username.required.$invalid">שם משתמש נדרש.</div>
+            <div v-if="v$.username.minLength.$invalid">לפחות 3 תווים.</div>
+            <div v-if="v$.username.maxLength.$invalid">לכל היותר 8 תווים.</div>
+            <div v-if="v$.username.pattern.$invalid">אותיות בלבד.</div>
+          </div>
         </div>
-      </div>
 
-      <!-- First Name -->
-      <div class="form-group">
-        <label>First Name:</label>
-        <input v-model="state.first_name" type="text" class="form-control" />
-        <div v-if="v$.first_name.$error" class="text-danger">First name is required.</div>
-      </div>
-
-      <!-- Last Name -->
-      <div class="form-group">
-        <label>Last Name:</label>
-        <input v-model="state.last_name" type="text" class="form-control" />
-        <div v-if="v$.last_name.$error" class="text-danger">Last name is required.</div>
-      </div>
-
-      <!-- Country -->
-      <div class="form-group">
-        <label>Country:</label>
-        <select v-model="state.country" class="form-control">
-          <option disabled value="">Please select a country</option>
-          <option v-for="country in countries" :key="country" :value="country">
-            {{ country }}
-          </option>
-        </select>
-        <div v-if="v$.country.$error" class="text-danger">Country is required.</div>
-      </div>
-
-      <!-- Password -->
-      <div class="form-group">
-        <label>Password:</label>
-        <input :type="showPasswords ? 'text' : 'password'" v-model="state.password" class="form-control" />
-        <div v-if="v$.password.$error" class="text-danger mt-1">
-          <div v-if="v$.password.required.$invalid">Password is required.</div>
-          <div v-if="v$.password.minLength.$invalid">At least 5 characters.</div>
-          <div v-if="v$.password.maxLength.$invalid">At most 10 characters.</div>
-          <div v-if="v$.password.pattern.$invalid">Include number & special char.</div>
+        <!-- First Name -->
+        <div class="form-group">
+          <label>שם פרטי:</label>
+          <input v-model="state.first_name" type="text" class="form-control" />
+          <div v-if="v$.first_name.$error" class="text-danger">שם פרטי נדרש.</div>
         </div>
-      </div>
 
-      <!-- Confirm Password -->
-      <div class="form-group">
-        <label>Confirm Password:</label>
-        <input :type="showPasswords ? 'text' : 'password'" v-model="state.confirm_password" class="form-control" />
-        <div v-if="v$.confirm_password.$error" class="text-danger mt-1">
-          <div v-if="v$.confirm_password.required.$invalid">Please confirm your password.</div>
-          <div v-if="v$.confirm_password.sameAsPassword.$invalid">Passwords do not match.</div>
+        <!-- Last Name -->
+        <div class="form-group">
+          <label>שם משפחה:</label>
+          <input v-model="state.last_name" type="text" class="form-control" />
+          <div v-if="v$.last_name.$error" class="text-danger">שם משפחה נדרש.</div>
         </div>
-      </div>
 
-      <!-- Show Password Checkbox -->
-      <div class="form-check mt-2 mb-3">
-        <input type="checkbox" id="showPasswords" class="form-check-input" v-model="showPasswords" />
-        <label for="showPasswords" class="form-check-label">Show password</label>
-      </div>
-
-      <!-- Email -->
-      <div class="form-group">
-        <label>Email:</label>
-        <input v-model="state.email" type="email" class="form-control" />
-        <div v-if="v$.email.$error" class="text-danger">
-          <div v-if="v$.email.required.$invalid">Email is required.</div>
-          <div v-if="v$.email.email.$invalid">Invalid email.</div>
+        <!-- Country -->
+        <div class="form-group">
+          <label>מדינה:</label>
+          <select v-model="state.country" class="form-control">
+            <option disabled value="">בחר מדינה</option>
+            <option v-for="country in countries" :key="country" :value="country">
+              {{ country }}
+            </option>
+          </select>
+          <div v-if="v$.country.$error" class="text-danger">מדינה נדרשת.</div>
         </div>
-      </div>
 
-      <button type="submit" class="btn btn-success mt-3">Register</button>
-    </form>
+        <!-- Password -->
+        <div class="form-group">
+          <label>סיסמה:</label>
+          <input :type="showPasswords ? 'text' : 'password'" v-model="state.password" class="form-control" />
+          <div v-if="v$.password.$error" class="text-danger">
+            <div v-if="v$.password.required.$invalid">סיסמה נדרשת.</div>
+            <div v-if="v$.password.minLength.$invalid">לפחות 5 תווים.</div>
+            <div v-if="v$.password.maxLength.$invalid">לכל היותר 10 תווים.</div>
+            <div v-if="v$.password.pattern.$invalid">חייב להכיל מספר ותו מיוחד.</div>
+          </div>
+        </div>
+
+        <!-- Confirm Password -->
+        <div class="form-group">
+          <label>אישור סיסמה:</label>
+          <input :type="showPasswords ? 'text' : 'password'" v-model="state.confirm_password" class="form-control" />
+          <div v-if="v$.confirm_password.$error" class="text-danger">
+            <div v-if="v$.confirm_password.required.$invalid">נא לאשר את הסיסמה.</div>
+            <div v-if="v$.confirm_password.sameAsPassword.$invalid">הסיסמאות לא תואמות.</div>
+          </div>
+        </div>
+
+        <!-- Show Password Checkbox -->
+        <div class="form-check">
+          <input type="checkbox" id="showPasswords" class="form-check-input" v-model="showPasswords" />
+          <label for="showPasswords" class="form-check-label">הצג סיסמה</label>
+        </div>
+
+        <!-- Email -->
+        <div class="form-group">
+          <label>אימייל:</label>
+          <input v-model="state.email" type="email" class="form-control" />
+          <div v-if="v$.email.$error" class="text-danger">
+            <div v-if="v$.email.required.$invalid">אימייל נדרש.</div>
+            <div v-if="v$.email.email.$invalid">אימייל לא תקין.</div>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">הרשמה</button>
+       
+        <div class="login-link">
+          כבר יש לך חשבון?
+          <router-link to="/login">התחבר כאן</router-link>
+        </div>
+      </form>
+    </div>
   </div>
 </template>
 
@@ -159,13 +167,13 @@ export default {
             email: state.email,
             profilePic: state.profilePic
           });
-          alert("Registration successful!");
+          alert("ההרשמה בוצעה בהצלחה!");
           router.push("/login");
         } catch (err) {
           if (err.response?.status === 409) {
-            alert("Username already exists. Please choose a different username.");
+            alert("שם המשתמש כבר קיים. אנא בחר שם משתמש אחר.");
           } else {
-            alert("Registration failed: " + JSON.stringify(err.response?.data || err.message));
+            alert("ההרשמה נכשלה: " + JSON.stringify(err.response?.data || err.message));
           }
         }
       }
@@ -184,7 +192,19 @@ export default {
 
 <style scoped>
 .register-page {
-  max-width: 400px;
-  margin: auto;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.title{
+  text-align: center;
+  margin-bottom: 30px;
+  padding: 30px;
+  background: linear-gradient(45deg,  #42b983 40%, #369870 60%);
+  border-radius: 15px;
+  color: white;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
 }
 </style>

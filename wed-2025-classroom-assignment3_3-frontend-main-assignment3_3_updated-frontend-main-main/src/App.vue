@@ -1,56 +1,49 @@
 <template>
   <div id="app">
     <div id="nav">
-      <router-link :to="{ name: 'main' }">Vue Recipes</router-link>
+      <router-link :to="{ name: 'main' }">דף הבית</router-link>
       <span class="separator">|</span>
-      <router-link :to="{ name: 'search' }">Search</router-link>
+      <router-link :to="{ name: 'search' }">חיפוש</router-link>
       <span class="separator">|</span>
-      <router-link :to="{ name: 'About' }">About</router-link>
-      
-      <!-- Dropdown Menu -->
+      <router-link :to="{ name: 'About' }">אודות</router-link>
+
       <template v-if="store.username">
         <span class="separator">|</span>
-        <!-- כפתור Add Recipe שפותח Modal -->
-        <button @click="openAddRecipeModal" class="nav-link btn-link">Add Recipe</button>
+        <button @click="openAddRecipeModal" class="nav-link btn-link">הוספת מתכון</button>
         <span class="separator">|</span>
-        
-        <!-- תכנון ארוחה עם אינדיקציה -->
+
         <router-link :to="{ name: 'MealPlan' }" class="nav-link meal-plan-link">
           <i class="fas fa-calendar-alt"></i>
           תכנון ארוחה
-          <span v-if="mealPlanCount > 0" class="meal-plan-badge">
-            {{ mealPlanCount }}
-          </span>
-          <span v-if="mealPlanProgress > 0" class="meal-plan-progress">
-            {{ mealPlanProgress }}%
-          </span>
+          <span v-if="mealPlanCount > 0" class="meal-plan-badge">{{ mealPlanCount }}</span>
+          <span v-if="mealPlanProgress > 0" class="meal-plan-progress">{{ mealPlanProgress }}%</span>
         </router-link>
         <span class="separator">|</span>
-        
+
         <span class="dropdown">
-          <button @click="toggleDropdown" class="dropdown-btn">
-            Personal Area ▼
-          </button>
+          <button @click="toggleDropdown" class="dropdown-btn">האזור האישי ▼</button>
           <div v-show="showDropdown" class="dropdown-content">
-            <router-link :to="{ name: 'Favorites' }" @click="closeDropdown">My Favorite Recipes</router-link>
-            <router-link :to="{ name: 'MyRecipes' }" @click="closeDropdown">My Recipes</router-link>
-            <router-link :to="{ name: 'FamilyRecipes' }" @click="closeDropdown">My Family Recipes</router-link>
+            <router-link :to="{ name: 'Favorites' }" @click="closeDropdown">המתכונים המועדפים שלי</router-link>
+            <router-link :to="{ name: 'MyRecipes' }" @click="closeDropdown">המתכונים שלי</router-link>
+            <router-link :to="{ name: 'FamilyRecipes' }" @click="closeDropdown">מתכוני המשפחה שלי</router-link>
           </div>
         </span>
         <span class="separator">|</span>
+
         <span class="user-info">
           {{ store.username }}:
-          <button @click="logout" class="btn btn-link p-0">Logout</button>
+          <button @click="logout" class="btn btn-link p-0">התנתקות</button>
         </span>
       </template>
 
+      <!-- עבור אורח - רק לינק להרשמה, ההתחברות תהיה במסך הראשי -->
       <template v-else>
         <span class="separator">|</span>
         <span class="guest-info">
-          Hello Guest:
-          <router-link :to="{ name: 'register' }">Register</router-link>
+          <router-link :to="{ name: 'register' }">הרשמה</router-link>
+          :שלום אורח
           <span class="separator">|</span>
-          <router-link :to="{ name: 'login' }">Login</router-link>
+          <router-link :to="{ name: 'login' }">התחברות</router-link>
         </span>
       </template>
     </div>
@@ -59,7 +52,7 @@
     <div v-if="showAddRecipeModal" class="modal-backdrop" @click="closeAddRecipeModal">
       <div class="modal-container" @click.stop>
         <div class="modal-header">
-          <h3>🍳 הוספת מתכון חדש</h3>
+          <h3> הוספת מתכון חדש</h3>
           <button @click="closeAddRecipeModal" class="modal-close-btn">&times;</button>
         </div>
         <div class="modal-body">
@@ -83,9 +76,7 @@ import AddRecipe from '@/components/AddRecipe.vue';
 
 export default {
   name: "App",
-  components: {
-    AddRecipe
-  },
+  components: { AddRecipe },
   setup() {
     const internalInstance = getCurrentInstance();
     const store = internalInstance.appContext.config.globalProperties.store;
@@ -95,8 +86,7 @@ export default {
     const mealPlanCount = ref(0);
     const mealPlanProgress = ref(0);
     const showAddRecipeModal = ref(false);
-    
-    // נתוני המתכון החדש עבור ה-Modal
+
     const newRecipe = reactive({
       title: '',
       image: '',
@@ -107,29 +97,24 @@ export default {
       vegan: false,
       vegetarian: false,
       glutenFree: false,
-      likes: 0
+      likes: 0,
     });
-    
+
     onMounted(() => {
       const savedUsername = localStorage.getItem('loggedInUser');
       if (savedUsername && !store.username) {
         store.login(savedUsername);
       }
-      
-      // Close dropdown when clicking outside
       document.addEventListener('click', handleClickOutside);
-      
-      // Load meal plan data if user is logged in
+
       if (store.username || savedUsername) {
         loadMealPlanData();
       }
-      
-      // Watch for route changes to update meal plan data
+
       router.afterEach(() => {
-        if (store.username) {
-          loadMealPlanData();
-        }
+        if (store.username) loadMealPlanData();
       });
+
       window.addEventListener('mealPlanUpdated', () => {
         if (store.username) loadMealPlanData();
       });
@@ -143,21 +128,16 @@ export default {
       try {
         const response = await axios.get('/users/me/meal-plan');
         const mealPlan = response.data;
-        
+
         mealPlanCount.value = mealPlan.recipes?.length || 0;
-        
+
         if (mealPlanCount.value > 0) {
-          const totalProgress = mealPlan.recipes.reduce((sum, recipe) => 
-            sum + (recipe.progress || 0), 0
-          );
+          const totalProgress = mealPlan.recipes.reduce((sum, recipe) => sum + (recipe.progress || 0), 0);
           mealPlanProgress.value = Math.round(totalProgress / mealPlanCount.value);
         } else {
           mealPlanProgress.value = 0;
         }
-        
-        //console.log(`📊 תכנון ארוחה: ${mealPlanCount.value} מתכונים, ${mealPlanProgress.value}% התקדמות`);
-      } catch (error) {
-        // אם יש שגיאה (כמו 401), פשוט לא מציגים מידע
+      } catch {
         mealPlanCount.value = 0;
         mealPlanProgress.value = 0;
       }
@@ -178,15 +158,12 @@ export default {
       }
     };
 
-    // פונקציות ה-Modal
     const openAddRecipeModal = () => {
       if (!store.username) {
-        alert('Please login to add recipes');
-        router.push('/login');
+        alert('נא להתחבר כדי להוסיף מתכונים');
+        router.push('/');  // מעביר למסך הראשי עם טופס ההתחברות
         return;
       }
-      
-      // איפוס נתוני המתכון
       Object.assign(newRecipe, {
         title: '',
         image: '',
@@ -197,35 +174,21 @@ export default {
         vegan: false,
         vegetarian: false,
         glutenFree: false,
-        likes: 0
+        likes: 0,
       });
-      
       showAddRecipeModal.value = true;
-      // לא נמנע גלילה כדי שהרקע יישאר נגיש
     };
 
     const closeAddRecipeModal = () => {
       showAddRecipeModal.value = false;
-      // לא צריך להחזיר גלילה כי לא חסמנו אותה
     };
 
     const submitUserRecipe = async (recipe) => {
       try {
-        console.log("📦 Submitting recipe from modal:", JSON.stringify(recipe, null, 2));
-        
         await axios.post('/users/me/recipes', recipe);
-        
-        // הצגת הודעת הצלחה
         alert('המתכון נוסף בהצלחה! 🎉');
-        
-        // סגירת ה-Modal
         closeAddRecipeModal();
-        
-        // אופציונלי: ניווט לעמוד "המתכונים שלי"
-        // router.push('/me/my-recipes');
-        
       } catch (err) {
-        console.error('Error adding recipe:', err);
         alert('שגיאה בהוספת המתכון. נסה שוב מאוחר יותר.');
       }
     };
@@ -235,15 +198,15 @@ export default {
       localStorage.removeItem('loggedInUser');
       mealPlanCount.value = 0;
       mealPlanProgress.value = 0;
-      closeAddRecipeModal(); // סגירת Modal אם פתוח
+      closeAddRecipeModal();
       router.push("/").catch(() => {});
     };
 
-    return { 
-      store, 
-      logout, 
-      showDropdown, 
-      toggleDropdown, 
+    return {
+      store,
+      logout,
+      showDropdown,
+      toggleDropdown,
       closeDropdown,
       mealPlanCount,
       mealPlanProgress,
@@ -252,12 +215,11 @@ export default {
       openAddRecipeModal,
       closeAddRecipeModal,
       newRecipe,
-      submitUserRecipe
+      submitUserRecipe,
     };
   }
 }
 </script>
-
 <style lang="scss">
 @use "@/scss/form-style.scss" as *;
 
@@ -267,6 +229,7 @@ export default {
   -moz-osx-font-smoothing: grayscale;
   color: #2c3e50;
   min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
 }
 
 #nav {
@@ -278,61 +241,59 @@ export default {
   white-space: nowrap;
 }
 
-#nav a {
-  font-weight: bold;
+#nav a, .btn-link, .dropdown-btn {
+  font-weight: 700;
   color: #2c3e50;
   text-decoration: none;
+  cursor: pointer;
   white-space: nowrap;
+  transition: color 0.3s ease;
+  background: none;
+  border: none;
+  font-size: 1rem;
 }
 
 #nav a.router-link-exact-active {
   color: #42b983;
 }
 
+#nav a:hover, 
+.btn-link:hover, 
+.dropdown-btn:hover {
+  color: #42b983;
+}
+
 .separator {
   color: #2c3e50;
-  margin: 0 4px;
+  margin: 0 6px;
+  user-select: none;
 }
 
 .user-info, .guest-info {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   white-space: nowrap;
-}
-
-// כפתור Add Recipe בניווט
-.btn-link {
-  background: none;
-  border: none;
-  color: #2c3e50;
-  font-weight: bold;
-  cursor: pointer;
-  padding: 0;
-  font-size: inherit;
-  text-decoration: none;
-  white-space: nowrap;
-  
-  &:hover {
-    color: #42b983;
-  }
+  font-weight: 600;
 }
 
 .meal-plan-link {
   position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
+  font-weight: 700;
+  cursor: pointer;
 }
 
 .meal-plan-badge {
   background: #dc3545;
   color: white;
   font-size: 0.7rem;
-  padding: 2px 6px;
-  border-radius: 10px;
-  font-weight: bold;
-  min-width: 18px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: 700;
+  min-width: 20px;
   text-align: center;
   line-height: 1.2;
 }
@@ -341,9 +302,9 @@ export default {
   background: #28a745;
   color: white;
   font-size: 0.6rem;
-  padding: 1px 4px;
-  border-radius: 8px;
-  font-weight: bold;
+  padding: 1px 6px;
+  border-radius: 10px;
+  font-weight: 700;
   margin-right: 2px;
 }
 
@@ -352,41 +313,34 @@ export default {
   display: inline-block;
 }
 
-.dropdown-btn {
-  background: none;
-  border: none;
-  color: #2c3e50;
-  font-weight: bold;
-  cursor: pointer;
-  padding: 0;
-  font-size: inherit;
-  white-space: nowrap;
-}
-
-.dropdown-btn:hover {
-  color: #42b983;
-}
-
 .dropdown-content {
   position: absolute;
-  top: 100%;
+  top: 110%;
   left: 0;
   background-color: white;
-  min-width: 200px;
-  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-  z-index: 1000;
-  border-radius: 4px;
+  min-width: 210px;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+  border-radius: 6px;
   overflow: hidden;
-  margin-top: 5px;
+  z-index: 1000;
+  transition: opacity 0.3s ease;
+  opacity: 1;
+}
+
+.dropdown-content[style*="display: none"] {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .dropdown-content a {
   color: #2c3e50;
-  padding: 12px 16px;
-  text-decoration: none;
+  padding: 14px 20px;
   display: block;
-  border-bottom: 1px solid #f1f1f1;
+  text-decoration: none;
+  font-weight: 600;
+  border-bottom: 1px solid #eee;
   white-space: nowrap;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .dropdown-content a:last-child {
@@ -394,27 +348,26 @@ export default {
 }
 
 .dropdown-content a:hover {
-  background-color: #f1f1f1;
-  color: #42b983;
+  background-color: #42b983;
+  color: white;
 }
-
 
 .modal-backdrop {
   position: fixed;
-  inset: 0; // מקביל ל-top: 0; right: 0; bottom: 0; left: 0;
+  inset: 0;
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 9999;
-  background: transparent; // רקע שקוף לחלוטין
-  pointer-events: none; // מאפשר אינטראקציה עם הדף שמאחורי אם רוצים
+  background: rgba(0,0,0,0.35);
   padding: 20px;
+  overflow-y: auto;
 }
 
 .modal-container {
   background: white;
   border-radius: 15px;
-  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.2); // טיפה יותר כהה להפרדה מהרקע
+  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.25);
   border: 1px solid rgba(0, 0, 0, 0.1);
   max-width: 1000px;
   width: 95%;
@@ -423,10 +376,8 @@ export default {
   display: flex;
   flex-direction: column;
   animation: modalSlideIn 0.3s ease-out;
-  z-index: 10000; // גבוה יותר מה-backdrop
-  pointer-events: all; // כן קולט אינטראקציה
+  pointer-events: all;
 }
-
 
 @keyframes modalSlideIn {
   from {
@@ -441,21 +392,30 @@ export default {
 
 .modal-header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px 30px;
+  justify-content: center; /* מרכז אופקי */
+  align-items: center;     /* מרכז אנכי */
+  padding: 20px 60px;      /* רווח גדול מצד ימין ושמאל */
   border-bottom: 1px solid #e9ecef;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #42b983 40%, #369870 60%);
   color: white;
-  
-  h3 {
-    margin: 0;
-    font-size: 1.5rem;
-    font-weight: 600;
-  }
+  position: relative;      /* כדי למקם את כפתור הסגירה יחסית */
 }
 
+/* הכותרת תישאר במרכז */
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+
+/* כפתור סגירה מימין, מעל הליי-אאוט המרכזי */
 .modal-close-btn {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
   background: none;
   border: none;
   font-size: 2rem;
@@ -468,61 +428,61 @@ export default {
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  transition: background-color 0.2s;
-  
-  &:hover {
-    background-color: rgba(255, 255, 255, 0.2);
-  }
+  transition: background-color 0.2s ease;
+}
+
+.modal-close-btn:hover {
+  background-color: rgba(255, 255, 255, 0.25);
 }
 
 .modal-body {
   flex: 1;
   overflow-y: auto;
   padding: 0;
-  
-  // הסרת הpadding מהקומפוננטה פנימית
-  :deep(.container) {
-    max-width: none;
-    padding: 40px;
-    margin: 0;
-  }
-  
-  :deep(h2) {
-    display: none; // הסתרת הכותרת כי יש לנו כותרת ב-header
-  }
 }
 
-/* תגובה למסכים קטנים */
+.modal-body :deep(.container) {
+  max-width: none;
+  padding: 40px;
+  margin: 0;
+}
+
+.modal-body :deep(h2) {
+  display: none;
+}
+
+/* Responsive */
+
 @media (max-width: 768px) {
   #nav {
     flex-wrap: wrap;
-    gap: 4px;
+    gap: 6px;
   }
-  
+
   .dropdown-content {
     min-width: 180px;
   }
-  
+
   .meal-plan-link {
     font-size: 0.9rem;
   }
-  
+
   .modal-container {
     margin: 10px;
     max-height: 90vh;
     width: 98%;
   }
-  
+
   .modal-header {
     padding: 15px 20px;
-    
-    h3 {
-      font-size: 1.3rem;
-    }
   }
-  
+
+  .modal-header h3 {
+    font-size: 1.3rem;
+  }
+
   .modal-body :deep(.container) {
-    padding: 40px;
+    padding: 30px;
   }
 }
 
@@ -530,7 +490,7 @@ export default {
   .modal-backdrop {
     padding: 0;
   }
-  
+
   .modal-container {
     margin: 0;
     border-radius: 0;

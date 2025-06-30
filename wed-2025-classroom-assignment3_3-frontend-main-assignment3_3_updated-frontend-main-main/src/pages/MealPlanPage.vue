@@ -431,7 +431,7 @@ onMounted(() => {
 .meal-plan-header {
   text-align: center;
   margin-bottom: 3rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #42b983 40%, #369870 60%);
   color: white;
   padding: 3rem 2rem;
   border-radius: 20px;
@@ -482,7 +482,7 @@ onMounted(() => {
 .stat-number {
   font-size: 2.5rem;
   font-weight: 700;
-  color: #3498db;
+  color:  #42b983;
   line-height: 1;
 }
 
@@ -540,7 +540,7 @@ onMounted(() => {
   position: absolute;
   top: 10px;
   left: 10px;
-  background: #3498db;
+  background:  #42b983;
   color: white;
   width: 30px;
   height: 30px;
@@ -558,7 +558,7 @@ onMounted(() => {
   position: absolute;
   top: 10px;
   right: 10px;
-  background: rgba(52, 152, 219, 0.9);
+  background: #42b983(52, 152, 219, 0.9);
   color: white;
   padding: 5px 10px;
   border-radius: 15px;

@@ -1,5 +1,5 @@
 <template>
-  <div class="card h-100 position-relative">
+  <div class="recipe-card position-relative">
     <!-- Favorite Icon -->
     <div
       class="favorite-icon"
@@ -25,21 +25,29 @@
       <img
         v-if="recipe.image"
         :src="recipe.image"
-        class="card-img-top recipe-image"
-        alt="Recipe image"
+        class="recipe-image"
+        alt="תמונת מתכון"
       />
+
       <!-- Diet Icons -->
       <div class="diet-icons">
         <div v-if="recipe.vegan" class="diet-icon" title="טבעוני">🌱</div>
         <div v-if="recipe.vegetarian" class="diet-icon" title="צמחוני">🥬</div>
+        <div v-if="recipe.glutenFree" class="diet-icon" title="ללא גלוטן">🌾</div>
       </div>
     </div>
 
     <!-- Details -->
     <div class="card-body text-center">
-      <h5 class="card-title">{{ recipe.title }}</h5>
-      <p class="card-text">⏰ {{ recipe.duration }} דקות</p>
-      <p class="card-text">👍 {{ recipe.likes }}</p>
+      <h5 class="recipe-title">{{ recipe.title }}</h5>
+      <p class="recipe-info">⏰ {{ recipe.duration }} דקות</p>
+      <p class="recipe-info">👍 {{ recipe.likes }}</p>
+
+      <!-- משפחתי -->
+      <div class="family-info mt-2">
+        <div v-if="recipe.tradition"> מסורת: {{ recipe.tradition }}</div>
+        <div v-if="recipe.family_member"> בן משפחה: {{ recipe.family_member }}</div>
+      </div>
     </div>
   </div>
 </template>
@@ -52,12 +60,6 @@ export default {
       type: Object,
       required: true,
     },
-  },
-  mounted() {
-    // כאן הבדיקה!
-    console.log("המתכון שהתקבל:", this.recipe);
-    console.log("האם מועדף:", this.recipe.isFavorite);
-    console.log("האם נצפה:", this.recipe.viewed);
   },
   methods: {
     markAsViewed() {
@@ -73,14 +75,30 @@ export default {
 </script>
 
 <style scoped>
-.recipe-image {
-  width: 100%;
-  height: 200px;
-  object-fit: cover;
+.recipe-card {
+  background: white;
+  border-radius: 15px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  margin-bottom: 20px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.recipe-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
 }
 
 .image-container {
   position: relative;
+}
+
+.recipe-image {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-top-left-radius: 15px;
+  border-top-right-radius: 15px;
 }
 
 .diet-icons {
@@ -88,11 +106,12 @@ export default {
   bottom: 10px;
   right: 10px;
   display: flex;
-  gap: 5px;
+  gap: 8px;
 }
 
 .diet-icon {
   background-color: rgba(255, 255, 255, 0.9);
+  color: white;
   border-radius: 50%;
   width: 35px;
   height: 35px;
@@ -100,7 +119,7 @@ export default {
   align-items: center;
   justify-content: center;
   font-size: 18px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
 .favorite-icon {
@@ -110,8 +129,8 @@ export default {
   font-size: 24px;
   cursor: pointer;
   z-index: 2;
-  color: gray;
-  transition: color 0.2s ease;
+  color: #bbb;
+  transition: color 0.3s ease;
 }
 
 .favorite-icon.active {
@@ -121,9 +140,38 @@ export default {
 .viewed-indicator {
   position: absolute;
   top: 10px;
-  z-index: 2;
   right: 10px;
   font-size: 22px;
   color: #777;
+  z-index: 2;
+}
+
+.card-body {
+  padding: 15px;
+}
+
+.recipe-title {
+  font-size: 1.3rem;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.recipe-info {
+  color: #555;
+  margin-bottom: 5px;
+}
+
+.family-info {
+  background: #f9f9f9;
+  padding: 8px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  color: #444;
+}
+
+@media (max-width: 768px) {
+  .recipe-image {
+    height: 150px;
+  }
 }
 </style>

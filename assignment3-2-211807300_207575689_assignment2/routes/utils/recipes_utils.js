@@ -275,7 +275,10 @@ async function getAllRecipesPreviewDetails(user_id=null, recipe_ids) {
             likes: recipe_info.likes,
             vegan: recipe_info.vegan,
             vegetarian: recipe_info.vegetarian,
-            glutenFree: recipe_info.glutenFree
+            glutenFree: recipe_info.glutenFree,
+            family_member: recipe_info.family_member,
+            tradition: recipe_info.tradition
+
           });
         }
       } catch (err) {

@@ -216,7 +216,8 @@ router.post('/me/family-recipes', async (req, res, next) => {
     const user_id = req.session.user_id;
     
     // Validate all required fields are present
-    const { title, image, family_member, tradition, ingredients, instructions } = req.body;
+    const {title, image, instructions, tradition, family_member, ingredients,
+                duration, likes, vegan, vegetarian, glutenFree} = req.body;
     
     if (!title || !image || !family_member || !tradition || !ingredients || !instructions) {
       return res.status(400).send({ message: "Missing required fields", success: false });
@@ -239,7 +240,12 @@ router.post('/me/family-recipes', async (req, res, next) => {
       family_member,
       tradition,
       ingredients,
-      instructions
+      instructions,
+      duration,
+      likes,
+      vegan,
+      vegetarian, 
+      glutenFree
     });
     
     res.status(201).send({ 

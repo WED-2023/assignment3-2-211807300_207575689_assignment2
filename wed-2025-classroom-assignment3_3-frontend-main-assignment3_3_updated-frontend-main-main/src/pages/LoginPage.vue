@@ -1,12 +1,9 @@
 <template>
   <div class="login-page">
-    <div class="image-container">
-  <!-- אפשרות עתידית לתמונה רקע: <img src="@/assets/login-image.webp" alt="Login Illustration" /> -->
-    </div>
     <div class="form-container">
       <h1 class="title">Login</h1>
       <b-form @submit.prevent="login">
-        <b-form-group label="Username:" label-for="username">
+        <b-form-group label="Username:" label-for="שם משתמש">
           <b-form-input
             id="username"
             v-model="state.username"
@@ -18,7 +15,7 @@
           </b-form-invalid-feedback>
         </b-form-group>
 
-        <b-form-group label="Password:" label-for="password">
+        <b-form-group label="Password:" label-for="סיסמה">
           <b-form-input
             id="password"
             type="password"
@@ -34,8 +31,8 @@
         <b-button type="submit" variant="primary" class="w-100">Login</b-button>
 
         <div class="mt-2 text-center">
-          Don’t have an account?
-          <router-link to="/register">Register here</router-link>
+          Don't have an account?
+          <router-link to="/register">הרשמה</router-link>
         </div>
 
         <b-alert class="mt-2" v-if="state.submitError" variant="danger" dismissible show>
@@ -53,116 +50,131 @@ import { useVuelidate } from '@vuelidate/core';
 import { required } from '@vuelidate/validators';
 import axios from 'axios';
 
-
-
-
 export default {
   name: 'LoginPage',
-  setup() {
-  const router = useRouter();
-  const internalInstance = getCurrentInstance();
-  const store = internalInstance.appContext.config.globalProperties.store;
+  emits: ['login-success'], // הוספת emit עבור הודעה על התחברות מוצלחת
+  setup(props, { emit }) {
+    const router = useRouter();
+    const internalInstance = getCurrentInstance();
+    const store = internalInstance.appContext.config.globalProperties.store;
 
-  const state = reactive({
-    username: '',
-    password: '',
-    submitError: null,
-  });
+    const state = reactive({
+      username: '',
+      password: '',
+      submitError: null,
+    });
 
-  const rules = {
-    username: { required },
-    password: { required },
-  };
+    const rules = {
+      username: { required },
+      password: { required },
+    };
 
-  const v$ = useVuelidate(rules, state);
+    const v$ = useVuelidate(rules, state);
 
-  const login = async () => {
-    const valid = await v$.value.$validate();
-    if (!valid) return;
+    const login = async () => {
+      const valid = await v$.value.$validate();
+      if (!valid) return;
 
-    try {
-      const response = await axios.post('/login', {
-        username: state.username,
-        password: state.password,
-      });
+      try {
+        const response = await axios.post('/login', {
+          username: state.username,
+          password: state.password,
+        });
 
-      if (response?.data?.success) {
-        localStorage.setItem('loggedInUser', state.username);
-        store.login(state.username);  // ✅ עובד עם ה־store הגלובלי
-        router.push('/');
-      } else {
-        state.submitError = response?.data?.message || 'Invalid login.';
+        if (response?.data?.success) {
+          localStorage.setItem('loggedInUser', state.username);
+          store.login(state.username);
+
+          // שלח הודעה שההתחברות הצליחה
+          emit('login-success');
+          
+          // אם זה עמוד נפרד (לא קומפוננטה), נווט לדף הבית
+          if (router.currentRoute.value.name === 'login') {
+            router.push('/');
+          }
+        } else {
+          state.submitError = response?.data?.message || 'Invalid login.';
+        }
+      } catch (error) {
+        state.submitError = error.response?.data?.message || 'Unexpected error occurred.';
       }
-    } catch (error) {
-      state.submitError = error.response?.data?.message || 'Unexpected error occurred.';
-    }
-  };
+    };
 
-  return {
-    state,
-    v$,
-    login,
-  };
-}
+    return {
+      state,
+      v$,
+      login,
+    };
+  }
 };
 </script>
-
 
 <style scoped lang="scss">
 .login-page {
   display: flex;
-  height: 100vh;
-  overflow: hidden;
-}
-
-.image-container {
-  flex: 1;
-  background-color: #f8f9fa;
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  padding: 20px;
 }
 
 .form-container {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+  background: white;
   padding: 40px;
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 500px;
+  animation: fadeIn 0.8s ease-out;
 
   .title {
     text-align: center;
-    color: #9168b3;
-    font-size: 4em;
+    font-size: 2.5rem;
     font-weight: bold;
+    margin-bottom: 1.5rem;
+    color: #42b983;
   }
 
-  .b-form-group {
-    margin-bottom: 1rem;
+  :deep(.form-group) {
+    margin-bottom: 1.5rem;
   }
 
-  .b-form-group > label {
+  :deep(.btn) {
+    background: linear-gradient(135deg, #42b983 0%, #369870 100%);
+    border: none;
+    padding: 12px 20px;
+    font-size: 1.1rem;
     font-weight: bold;
-  }
+    color: white;
 
-  .b-form-input, .b-form-select {
-    margin-top: 0.5rem;
-  }
-
-  .b-button {
-    width: 100%;
-    padding: 10px;
-  }
-
-  .b-alert {
-    margin-top: 1rem;
+    &:hover {
+      background: linear-gradient(135deg, #369870 0%, #2d7a5f 100%);
+    }
   }
 
   .text-center {
-    text-align: center;
+    margin-top: 1rem;
+
+    a {
+      color: #42b983;
+      font-weight: bold;
+      text-decoration: none;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
   }
+
+  :deep(.alert) {
+    border-radius: 10px;
+    font-weight: 500;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 </style>

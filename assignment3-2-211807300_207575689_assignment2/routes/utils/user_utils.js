@@ -19,9 +19,9 @@ async function removeFromFavorites(user_id, recipe_id) {
 async function createNewRecipe(user_id, recipeData) {
   try {
     // המרת ערכים בוליאניים למספרים (0/1) עבור השדות הרלוונטיים
-    const isVegan = recipeData.isVegan ? 1 : 0;
-    const isVegetarian = recipeData.isVegetarian ? 1 : 0;
-    const isGlutenFree = recipeData.isGlutenFree ? 1 : 0;
+    const isVegan = recipeData.vegan ? 1 : 0;
+    const isVegetarian = recipeData.vegetarian ? 1 : 0;
+    const isGlutenFree = recipeData.glutenFree ? 1 : 0;
     
     // המרת מערך המרכיבים ל-JSON
     const ingredientsJson = JSON.stringify(recipeData.ingredients);
@@ -75,7 +75,7 @@ async function createNewFamilyRecipe(user_id, recipeData) {
     // המרת instructions ו-ingredients ל-JSON
     const ingredientsJson = JSON.stringify(recipeData.ingredients);
     const instructionsJson = JSON.stringify(recipeData.instructions);
-    
+
     // פונקציה לבריחה מתווים מיוחדים ב-SQL
     const escapeSQL = (str) => {
       if (typeof str !== 'string') return str;
@@ -92,19 +92,27 @@ async function createNewFamilyRecipe(user_id, recipeData) {
         }
       });
     };
-    
-    // בריחה מכל הערכים
+
+    // בריחה לכל השדות הטקסטואליים
     const title = escapeSQL(recipeData.title);
     const image = escapeSQL(recipeData.image);
     const tradition = escapeSQL(recipeData.tradition);
     const family_member = escapeSQL(recipeData.family_member);
     const escapedInstructions = escapeSQL(instructionsJson);
     const escapedIngredients = escapeSQL(ingredientsJson);
-    
+
+    // מספרים - אין צורך בגרשיים
+    const duration = recipeData.duration || 0;
+    const likes = recipeData.likes || 0;
+    const vegan = recipeData.vegan ? 1 : 0;
+    const vegetarian = recipeData.vegetarian ? 1 : 0;
+    const glutenFree = recipeData.glutenFree ? 1 : 0;
+
     const result = await DButils.execQuery(
-      `INSERT INTO family_recipes (user_id, title, image, instructions, tradition, family_member, ingredients) 
+      `INSERT INTO family_recipes (user_id, title, image, instructions, tradition, family_member, ingredients, duration, likes, vegan, vegetarian, glutenFree) 
        VALUES ('${user_id}', '${title}', '${image}', '${escapedInstructions}', 
-               '${tradition}', '${family_member}', '${escapedIngredients}')`
+               '${tradition}', '${family_member}', '${escapedIngredients}', 
+               ${duration}, ${likes}, ${vegan}, ${vegetarian}, ${glutenFree})`
     );
 
     const recipe_id = result.insertId;
@@ -113,6 +121,7 @@ async function createNewFamilyRecipe(user_id, recipeData) {
     throw { status: 500, message: "Failed to create family recipe: " + error.message };
   }
 }
+
 
 async function getFamilyRecipe(user_id){
     const recipes_id = await DButils.execQuery(`select id from family_recipes where user_id='${user_id}'`);
