@@ -35,8 +35,6 @@
             <router-link :to="{ name: 'Favorites' }" @click="closeDropdown">My Favorite Recipes</router-link>
             <router-link :to="{ name: 'MyRecipes' }" @click="closeDropdown">My Recipes</router-link>
             <router-link :to="{ name: 'FamilyRecipes' }" @click="closeDropdown">My Family Recipes</router-link>
-            <!-- קישור לעמוד הרגיל של הוספת מתכון -->
-            <router-link to="/me/add-my-recipe" @click="closeDropdown">Add Recipe (Full Page)</router-link>
           </div>
         </span>
         <span class="separator">|</span>
@@ -400,26 +398,23 @@ export default {
   color: #42b983;
 }
 
-// עיצוב ה-Modal
+
 .modal-backdrop {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  //background-color: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(4px);
+  inset: 0; // מקביל ל-top: 0; right: 0; bottom: 0; left: 0;
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 9999;
+  background: transparent; // רקע שקוף לחלוטין
+  pointer-events: none; // מאפשר אינטראקציה עם הדף שמאחורי אם רוצים
   padding: 20px;
 }
 
 .modal-container {
   background: white;
   border-radius: 15px;
-  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.2); // טיפה יותר כהה להפרדה מהרקע
   border: 1px solid rgba(0, 0, 0, 0.1);
   max-width: 1000px;
   width: 95%;
@@ -428,7 +423,10 @@ export default {
   display: flex;
   flex-direction: column;
   animation: modalSlideIn 0.3s ease-out;
+  z-index: 10000; // גבוה יותר מה-backdrop
+  pointer-events: all; // כן קולט אינטראקציה
 }
+
 
 @keyframes modalSlideIn {
   from {
