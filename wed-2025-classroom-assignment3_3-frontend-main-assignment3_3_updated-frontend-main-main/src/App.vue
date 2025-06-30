@@ -46,7 +46,7 @@
       <template v-else>
         <span class="separator">|</span>
         <span class="guest-info">
-          Guest:
+          Hello Guest:
           <router-link :to="{ name: 'register' }">Register</router-link>
           <span class="separator">|</span>
           <router-link :to="{ name: 'login' }">Login</router-link>
