@@ -58,7 +58,7 @@
           <!-- Sort By -->
           <div class="form-group">
             <label>מיון לפי:</label>
-            <select v-model="searchParams.sortBy" class="form-control">
+            <select v-model="searchParams.sortBy" class="form-control" @change="updateSearchResults">
               <option value="">ברירת מחדל</option>
               <option value="duration">זמן הכנה</option>
               <option value="popularity">פופולריות</option>
@@ -100,44 +100,13 @@
       </div>
     </div>
 
-    <!-- Results -->
+    <!-- Results using RecipePreviewList -->
     <div v-if="searchResults.length > 0 && !isLoading" class="results-section">
-      <div class="results-header">
-        <h3>נמצאו {{ searchResults.length }} מתכונים</h3>
-      </div>
-      
-      <div class="recipe-grid">
-        <div 
-          v-for="recipe in searchResults" 
-          :key="recipe.id" 
-          class="recipe-card"
-          @click="openRecipe(recipe.id)"
-        >
-          <div class="recipe-image-container">
-            <img 
-              :src="recipe.image" 
-              :alt="recipe.title" 
-              class="recipe-image"
-              @error="handleImageError"
-            />
-          </div>
-          
-          <div class="recipe-content">
-            <h4 class="recipe-title">{{ recipe.title }}</h4>
-            
-            <div class="recipe-meta">
-              <span class="duration">⏱️ {{ recipe.duration }} דקות</span>
-              <span class="likes">❤️ {{ recipe.likes }} לייקים</span>
-            </div>
-            
-            <div class="recipe-badges">
-              <span v-if="recipe.vegan" class="badge badge-vegan">טבעוני</span>
-              <span v-else-if="recipe.vegetarian" class="badge badge-vegetarian">צמחוני</span>
-              <span v-if="recipe.glutenFree" class="badge badge-gluten-free">ללא גלוטן</span>
-            </div>
-          </div>
-        </div>
-      </div>
+      <RecipePreviewList 
+        :title="getResultsTitle()"
+        :recipes="searchResults"
+        class="search-results"
+      />
     </div>
 
     <!-- No Results -->
@@ -150,14 +119,15 @@
 
 <script>
 import axios from 'axios';
-import { reactive, ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { reactive, ref, onMounted, computed } from 'vue';
+import RecipePreviewList from '@/components/RecipePreviewList.vue';
 
 export default {
   name: 'SearchPage',
+  components: {
+    RecipePreviewList
+  },
   setup() {
-    const router = useRouter();
-    
     const searchParams = reactive({
       query: '',
       cuisine: '',
@@ -168,42 +138,130 @@ export default {
     });
 
     const searchResults = ref([]);
+    const rawSearchResults = ref([]); // שמירת התוצאות המקוריות
     const isLoading = ref(false);
     const errorMessage = ref('');
     const hasSearched = ref(false);
 
     const cuisines = ref([
-      { value: 'Italian', label: 'איטלקי' },
-      { value: 'Chinese', label: 'סיני' },
-      { value: 'Mexican', label: 'מקסיקני' },
-      { value: 'Indian', label: 'הודי' },
-      { value: 'French', label: 'צרפתי' },
-      { value: 'Mediterranean', label: 'ים תיכוני' },
+      { value: 'African', label: 'אפריקני' },
+      { value: 'Asian', label: 'אסייתי' },
       { value: 'American', label: 'אמריקאי' },
-      { value: 'Thai', label: 'תאילנדי' },
+      { value: 'British', label: 'בריטי' },
+      { value: 'Cajun', label: 'קיג\'ון' },
+      { value: 'Caribbean', label: 'קריבי' },
+      { value: 'Chinese', label: 'סיני' },
+      { value: 'Eastern European', label: 'מזרח אירופי' },
+      { value: 'European', label: 'אירופי' },
+      { value: 'French', label: 'צרפתי' },
+      { value: 'German', label: 'גרמני' },
+      { value: 'Greek', label: 'יווני' },
+      { value: 'Indian', label: 'הודי' },
+      { value: 'Irish', label: 'אירי' },
+      { value: 'Italian', label: 'איטלקי' },
       { value: 'Japanese', label: 'יפני' },
-      { value: 'Greek', label: 'יווני' }
+      { value: 'Jewish', label: 'יהודי' },
+      { value: 'Korean', label: 'קוריאני' },
+      { value: 'Latin American', label: 'דרום אמריקני' },
+      { value: 'Mediterranean', label: 'ים תיכוני' },
+      { value: 'Mexican', label: 'מקסיקני' },
+      { value: 'Middle Eastern', label: 'מזרח תיכוני' },
+      { value: 'Nordic', label: 'נורדי' },
+      { value: 'Southern', label: 'דרומי' },
+      { value: 'Spanish', label: 'ספרדי' },
+      { value: 'Thai', label: 'תאילנדי' },
+      { value: 'Vietnamese', label: 'וייטנאמי' }
     ]);
 
     const diets = ref([
-      { value: 'vegan', label: 'טבעוני' },
-      { value: 'vegetarian', label: 'צמחוני' },
-      { value: 'ketogenic', label: 'קטוגני' },
-      { value: 'paleo', label: 'פליאו' },
-      { value: 'whole30', label: 'Whole30' },
-      { value: 'gluten free', label: 'ללא גלוטן' }
+      { value: 'Gluten Free', label: 'ללא גלוטן' },
+      { value: 'Ketogenic', label: 'קטוגני' },
+      { value: 'Vegetarian', label: 'צמחוני' },
+      { value: 'Lacto-Vegetarian', label: 'צמחוני-חלבי' },
+      { value: 'Ovo-Vegetarian', label: 'צמחוני-ביצים' },
+      { value: 'Vegan', label: 'טבעוני' },
+      { value: 'Pescetarian', label: 'פסקטריאן' },
+      { value: 'Paleo', label: 'פליאו' },
+      { value: 'Primal', label: 'פרימל' },
+      { value: 'Low FODMAP', label: 'Low FODMAP' },
+      { value: 'Whole30', label: 'Whole30' }
     ]);
 
     const intolerances = ref([
-      { value: 'gluten', label: 'גלוטן' },
-      { value: 'dairy', label: 'חלב' },
-      { value: 'egg', label: 'ביצים' },
-      { value: 'peanut', label: 'בוטנים' },
-      { value: 'tree nut', label: 'אגוזים' },
-      { value: 'soy', label: 'סויה' },
-      { value: 'shellfish', label: 'פירות ים' },
-      { value: 'sesame', label: 'שומשום' }
+      { value: 'Dairy', label: 'חלב' },
+      { value: 'Egg', label: 'ביצים' },
+      { value: 'Gluten', label: 'גלוטן' },
+      { value: 'Grain', label: 'דגנים' },
+      { value: 'Peanut', label: 'בוטנים' },
+      { value: 'Seafood', label: 'מאכלי ים' },
+      { value: 'Sesame', label: 'שומשום' },
+      { value: 'Shellfish', label: 'פירות ים' },
+      { value: 'Soy', label: 'סויה' },
+      { value: 'Sulfite', label: 'סולפיט' },
+      { value: 'Tree Nut', label: 'אגוזי עץ' },
+      { value: 'Wheat', label: 'חיטה' }
     ]);
+
+    // מיון התוצאות לפי הבחירה
+    const sortedResults = computed(() => {
+      if (!rawSearchResults.value.length) return [];
+      
+      const results = [...rawSearchResults.value];
+      
+      switch (searchParams.sortBy) {
+        case 'duration':
+          return results.sort((a, b) => {
+            const durationA = a.duration || a.readyInMinutes || 0;
+            const durationB = b.duration || b.readyInMinutes || 0;
+            return durationA - durationB; // מהמהיר לאיטי
+          });
+          
+        case 'popularity':
+          return results.sort((a, b) => {
+            const popularityA = a.likes || a.aggregateLikes || 0;
+            const popularityB = b.likes || b.aggregateLikes || 0;
+            return popularityB - popularityA; // מהפופולרי לפחות פופולרי
+          });
+          
+        default:
+          return results; // ברירת מחדל - ללא מיון
+      }
+    });
+
+    // עדכון searchResults כאשר המיון משתנה
+    const updateSearchResults = () => {
+      searchResults.value = sortedResults.value;
+    };
+    // שמירה וטעינה של החיפוש האחרון
+    const saveLastSearch = () => {
+      if (hasSearched.value && rawSearchResults.value.length > 0) {
+        const lastSearch = {
+          params: { ...searchParams },
+          results: rawSearchResults.value,
+          timestamp: Date.now()
+        };
+        sessionStorage.setItem('lastRecipeSearch', JSON.stringify(lastSearch));
+      }
+    };
+
+    const loadLastSearch = () => {
+      const saved = sessionStorage.getItem('lastRecipeSearch');
+      if (saved) {
+        try {
+          const lastSearch = JSON.parse(saved);
+          // טעינת החיפוש האחרון רק אם הוא מהיום האחרון
+          const dayAgo = Date.now() - (24 * 60 * 60 * 1000);
+          if (lastSearch.timestamp > dayAgo) {
+            Object.assign(searchParams, lastSearch.params);
+            rawSearchResults.value = lastSearch.results;
+            updateSearchResults();
+            hasSearched.value = true;
+          }
+        } catch (error) {
+          console.error('Error loading last search:', error);
+        }
+      }
+    };
 
     const buildSearchURL = () => {
       const params = new URLSearchParams();
@@ -227,7 +285,11 @@ export default {
         console.log('Searching with URL:', url);
         
         const response = await axios.get(url);
-        searchResults.value = response.data || [];
+        rawSearchResults.value = response.data || [];
+        updateSearchResults();
+        
+        // שמירת החיפוש האחרון
+        saveLastSearch();
         
         console.log('Search results:', searchResults.value);
       } catch (error) {
@@ -241,19 +303,22 @@ export default {
           errorMessage.value = 'אירעה שגיאה בחיפוש. אנא נסה שוב';
         }
         
+        rawSearchResults.value = [];
         searchResults.value = [];
       } finally {
         isLoading.value = false;
       }
     };
 
-    const openRecipe = (recipeId) => {
-      router.push(`/recipes/${recipeId}`);
+    const getResultsTitle = () => {
+      const count = searchResults.value.length;
+      return `נמצאו ${count} מתכונים`;
     };
 
-    const handleImageError = (event) => {
-      event.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPteh15vXlSDYgdeh15nXmSDXoNeZ15vXnSDXntiq15vXlden</text></svg>';
-    };
+    // טעינת החיפוש האחרון בעת טעינת הקומפוננטה
+    onMounted(() => {
+      loadLastSearch();
+    });
 
     return {
       searchParams,
@@ -265,8 +330,8 @@ export default {
       diets,
       intolerances,
       searchRecipes,
-      openRecipe,
-      handleImageError
+      getResultsTitle,
+      updateSearchResults
     };
   }
 };
@@ -407,100 +472,20 @@ export default {
   margin-top: 30px;
 }
 
-.results-header {
-  margin-bottom: 20px;
-  padding-bottom: 15px;
-  border-bottom: 2px solid #f0f0f0;
-}
-
-.results-header h3 {
-  color: #333;
-  font-size: 1.3rem;
-}
-
-.recipe-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 25px;
-}
-
-.recipe-card {
+.search-results {
   background: white;
   border-radius: 15px;
-  overflow: hidden;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
-  cursor: pointer;
-}
-
-.recipe-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
-}
-
-.recipe-image-container {
-  height: 200px;
-  overflow: hidden;
-}
-
-.recipe-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.recipe-content {
   padding: 20px;
-}
-
-.recipe-title {
-  font-size: 1.2rem;
-  font-weight: 600;
-  margin-bottom: 10px;
-  color: #333;
-  line-height: 1.4;
-}
-
-.recipe-meta {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 15px;
-  font-size: 0.9rem;
-  color: #666;
-}
-
-.recipe-badges {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.badge {
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 500;
-}
-
-.badge-vegan {
-  background: #e8f5e8;
-  color: #2d5a2d;
-}
-
-.badge-vegetarian {
-  background: #fff3cd;
-  color: #856404;
-}
-
-.badge-gluten-free {
-  background: #d1ecf1;
-  color: #0c5460;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
 }
 
 .no-results {
   text-align: center;
   padding: 60px 20px;
   color: #666;
+  background: white;
+  border-radius: 15px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
 }
 
 .no-results h3 {
@@ -515,10 +500,6 @@ export default {
   }
   
   .form-row {
-    grid-template-columns: 1fr;
-  }
-  
-  .recipe-grid {
     grid-template-columns: 1fr;
   }
   
