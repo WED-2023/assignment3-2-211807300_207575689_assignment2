@@ -203,42 +203,48 @@ const hasDietaryInfo = () => {
          recipe.value.dairyFree || recipe.value.sugarFree || recipe.value.keto;
 };
 
+// עדכון הפונקציה של מועדפים להתאים לקומפוננטה RecipePreviewList
 const toggleFavorite = async () => {
   try {
-    const newFavoriteStatus = !recipe.value.isFavorite;
-   
-    // קריאה לשרת לעדכון סטטוס המועדפים
-    const response = await axios.patch(`/recipes/${recipeId}/favorite`, {
-      isFavorite: newFavoriteStatus
-    });
-   
-    // עדכון המצב המקומי רק אם הקריאה הצליחה
-    if (response.status === 200) {
-      recipe.value.isFavorite = newFavoriteStatus;
-     
-      // הצגת הודעה
-      const message = newFavoriteStatus ? 'המתכון נוסף למועדפים!' : 'המתכון הוסר מהמועדפים';
-      successMessage.value = message;
-      showSuccessMessage.value = true;
-     
-      // הסתרת ההודעה אחרי 3 שניות
-      setTimeout(() => {
-        showSuccessMessage.value = false;
-      }, 3000);
+    if (!recipe.value) return;
+    
+    if (recipe.value.isFavorite) {
+      // הסרה מהמועדפים
+      await axios.delete(`/users/me/favorites/${recipeId}`);
+      recipe.value.isFavorite = false;
+      successMessage.value = 'המתכון הוסר מהמועדפים';
+    } else {
+      // הוספה למועדפים
+      await axios.post(`/users/me/favorites/${recipeId}`);
+      recipe.value.isFavorite = true;
+      successMessage.value = 'המתכון נוסף למועדפים!';
     }
-   
+    
+    // הצגת הודעה
+    showSuccessMessage.value = true;
+    
+    // הסתרת ההודעה אחרי 3 שניות
+    setTimeout(() => {
+      showSuccessMessage.value = false;
+    }, 3000);
+    
   } catch (err) {
     console.error('שגיאה בעדכון מועדפים:', err);
-   
+    
     let errorMessage = 'אירעה שגיאה בעדכון המועדפים';
-   
+    
     if (err.response?.status === 401) {
       errorMessage = 'נדרשת התחברות למערכת כדי לסמן מועדפים';
     } else if (err.response?.status === 404) {
       errorMessage = 'המתכון לא נמצא';
     }
-   
-    alert(errorMessage);
+    
+    successMessage.value = errorMessage;
+    showSuccessMessage.value = true;
+    
+    setTimeout(() => {
+      showSuccessMessage.value = false;
+    }, 3000);
   }
 };
 
