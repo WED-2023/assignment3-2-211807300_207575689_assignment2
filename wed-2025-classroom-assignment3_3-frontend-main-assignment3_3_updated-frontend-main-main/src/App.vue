@@ -16,7 +16,7 @@
           <i class="fas fa-calendar-alt"></i>
           תכנון ארוחה
           <span v-if="mealPlanCount > 0" class="meal-plan-badge">{{ mealPlanCount }}</span>
-          <span v-if="mealPlanProgress > 0" class="meal-plan-progress">{{ mealPlanProgress }}%</span>
+          <!-- <span v-if="mealPlanProgress > 0" class="meal-plan-progress">{{ mealPlanProgress }}%</span> -->
         </router-link>
         <span class="separator">|</span>
 
