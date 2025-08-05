@@ -2,8 +2,11 @@
   <div class="container">
     <h3>{{ title }}</h3>
     <div class="row">
-      <div class="col" v-for="r in recipes" :key="r.id">
-        <!-- האזנה לאירועים -->
+      <div
+        v-for="r in recipes"
+        :key="r.id"
+        :class="recipes.length >= 5 ? 'col-2' : 'col'"
+      >
         <RecipePreview
           class="recipePreview"
           :recipe="r"
@@ -14,6 +17,7 @@
     </div>
   </div>
 </template>
+
 
 <script>
 import axios from "axios";

@@ -12,6 +12,7 @@ router.post("/", async (req, res, next) => {
     if (!req.session || !req.session.user_id) {
       return res.status(401).send({ message: "User not authenticated" });
     }
+    console.log("✔️ נכנס לנתיב של "/" ")
 
     const user_id = req.session.user_id;
     const {
@@ -199,6 +200,7 @@ router.get("/search", async (req, res, next) => {
  * This path returns a full details of a recipe by its id
  */
 router.get("/:recipeId", async (req, res, next) => {
+  console.log("✔️ נכנס לנתיב של recipe details");
   try {
     const recipeId = req.params.recipeId; 
     const user_id = req.session?.user_id || null; 
@@ -244,7 +246,7 @@ router.get("/:recipeId", async (req, res, next) => {
         console.error("Failed to add user data:", error.message);
       }
     }
-
+    console.log(full_recipe)
     res.send(full_recipe); 
     
   } catch (error) { 

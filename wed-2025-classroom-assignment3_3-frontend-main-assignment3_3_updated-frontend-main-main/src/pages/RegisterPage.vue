@@ -1,9 +1,12 @@
 <template>
   <div class="register-page">
-    <div class="register-container">
-      <h1 class="title">הרשמה</h1>
-     
-      <form @submit.prevent="register" @input="v$.$touch()">
+    <div class="register-header">
+      <h1>הרשמה</h1>
+      <p>הצטרף אלינו והתחל לשמור ולשתף מתכונים</p>
+    </div>
+
+    <div class="form-container">
+      <form @submit.prevent="register" @input="v$.$touch()" class="register-form">
         <!-- Username -->
         <div class="form-group">
           <label>שם משתמש:</label>
@@ -12,7 +15,7 @@
             <div v-if="v$.username.required.$invalid">שם משתמש נדרש.</div>
             <div v-if="v$.username.minLength.$invalid">לפחות 3 תווים.</div>
             <div v-if="v$.username.maxLength.$invalid">לכל היותר 8 תווים.</div>
-            <div v-if="v$.username.pattern.$invalid">אותיות בלבד.</div>
+            <div v-if="v$.username.pattern.$invalid">אותיות באנגלית בלבד.</div>
           </div>
         </div>
 
@@ -80,8 +83,8 @@
           </div>
         </div>
 
-        <button type="submit" class="btn btn-primary">הרשמה</button>
-       
+        <button type="submit" class="search-btn">הרשמה</button>
+
         <div class="login-link">
           כבר יש לך חשבון?
           <router-link to="/login">התחבר כאן</router-link>
@@ -156,7 +159,6 @@ export default {
     const register = async () => {
       if (await v$.value.$validate()) {
         try {
-          console.log("Sending data:", state);
           await axios.post("/Register", {
             username: state.username,
             first_name: state.first_name,
@@ -171,7 +173,7 @@ export default {
           router.push("/login");
         } catch (err) {
           if (err.response?.status === 409) {
-            alert("שם המשתמש כבר קיים. אנא בחר שם משתמש אחר.");
+            alert("שם המשתמש כבר קיים. אנא בחר שם אחר.");
           } else {
             alert("ההרשמה נכשלה: " + JSON.stringify(err.response?.data || err.message));
           }
@@ -198,13 +200,117 @@ export default {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-.title{
+.register-header {
   text-align: center;
   margin-bottom: 30px;
   padding: 30px;
-  background: linear-gradient(45deg,  #42b983 40%, #369870 60%);
+  background: linear-gradient(45deg, #42b983 40%, #369870 60%);
   border-radius: 15px;
   color: white;
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  font-size: 2rem;
+  font-weight: bold;
+}
+.register-header h1 {
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+.register-header p {
+  font-size: 1.1rem;
+  opacity: 0.95;
+}
+
+
+.register-container {
+  background: #ffffff;
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+}
+
+.register-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  margin-bottom: 5px;
+  font-size: 0.85rem;
+  color: #333;
+}
+
+.form-control {
+  padding: 8px 12px;
+  font-size: 0.95rem;
+  border-radius: 6px;
+  border: 1.5px solid #e0e0e0;
+  transition: all 0.3s ease;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: #42b983;
+  box-shadow: 0 0 0 3px rgba(66, 185, 131, 0.2);
+}
+
+.text-danger {
+  font-size: 0.8rem;
+  color: #d9534f;
+  margin-top: 3px;
+}
+
+.form-check {
+  grid-column: span 2;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+  margin-top: 10px;
+}
+
+.btn-primary {
+  background: linear-gradient(45deg, #42b983 40%, #369870 60%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  grid-column: span 2;
+  margin-top: 20px;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(66, 185, 131, 0.4);
+}
+
+.login-link {
+  grid-column: span 2;
+  text-align: center;
+  font-size: 0.9rem;
+  margin-top: 15px;
+}
+
+@media (max-width: 768px) {
+  .register-form {
+    grid-template-columns: 1fr;
+  }
+
+  .btn-primary,
+  .form-check,
+  .login-link {
+    grid-column: span 1;
+  }
 }
 </style>
+

@@ -41,7 +41,9 @@
     <div class="card-body text-center">
       <h5 class="recipe-title">{{ recipe.title }}</h5>
       <p class="recipe-info">⏰ {{ recipe.duration }} דקות</p>
-      <p class="recipe-info">👍 {{ recipe.likes }}</p>
+      <!-- <p class="recipe-info">👍 {{ recipe.likes }}</p> -->
+      <div v-if="recipe.likes > 0" class="likes" title="אהבתי">👍 {{ recipe.likes }}</div>
+
 
       <!-- משפחתי -->
       <div class="family-info mt-2">

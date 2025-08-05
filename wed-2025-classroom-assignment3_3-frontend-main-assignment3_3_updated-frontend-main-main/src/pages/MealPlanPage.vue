@@ -73,12 +73,12 @@
       <div class="overall-progress mb-4">
         <h5>התקדמות כללית</h5>
         <div class="progress progress-lg">
-          <div 
-            class="progress-bar bg-success" 
-            role="progressbar" 
+          <div
+            class="progress-bar bg-success"
+            role="progressbar"
             :style="{ width: overallProgress + '%' }"
-            :aria-valuenow="overallProgress" 
-            aria-valuemin="0" 
+            :aria-valuenow="overallProgress"
+            aria-valuemin="0"
             aria-valuemax="100">
             {{ Math.round(overallProgress) }}%
           </div>
@@ -90,16 +90,16 @@
 
       <!-- Action Buttons -->
       <div class="action-buttons mb-4">
-        <button 
-          @click="clearAllRecipes" 
+        <button
+          @click="clearAllRecipes"
           class="btn btn-outline-danger"
           :disabled="clearing">
           <i class="fas fa-trash-alt"></i>
           {{ clearing ? 'מנקה...' : 'נקה את כל התכנון' }}
         </button>
-        
-        <button 
-          @click="refreshMealPlan" 
+       
+        <button
+          @click="refreshMealPlan"
           class="btn btn-outline-primary"
           :disabled="loading">
           <i class="fas fa-sync-alt"></i>
@@ -113,35 +113,35 @@
           <i class="fas fa-list-ol"></i>
           רשימת מתכונים לארוחה ({{ totalRecipes }})
         </h4>
-        
+       
         <!-- Custom Recipe Cards for Meal Plan -->
         <div class="meal-plan-grid">
-          <div 
-            v-for="(recipe, index) in sortedRecipes" 
+          <div
+            v-for="(recipe, index) in sortedRecipes"
             :key="recipe.recipeId"
             class="meal-plan-recipe-card"
             :class="{ 'completed': recipe.progress === 100 }">
-            
+           
             <!-- Recipe Preview using existing component structure -->
             <div class="recipe-preview-wrapper">
               <!-- Recipe Position Badge -->
               <div class="recipe-position-badge">
                 {{ index + 1 }}
               </div>
-              
+             
               <!-- Progress Badge -->
               <div class="recipe-progress-badge" :class="{ 'completed': recipe.progress === 100 }">
                 {{ recipe.progress || 0 }}%
               </div>
-              
+             
               <!-- Recipe Image and Basic Info -->
               <div class="recipe-image-container">
-                <img 
-                  :src="recipe.image" 
+                <img
+                  :src="recipe.image"
                   :alt="recipe.title"
                   class="recipe-image">
                 <div class="recipe-overlay">
-                  <router-link 
+                  <router-link
                     :to="`/recipes/${recipe.recipeId}`"
                     class="btn btn-sm btn-light">
                     <i class="fas fa-eye"></i>
@@ -149,7 +149,7 @@
                   </router-link>
                 </div>
               </div>
-              
+             
               <!-- Recipe Details -->
               <div class="recipe-details">
                 <h5 class="recipe-title">{{ recipe.title }}</h5>
@@ -159,42 +159,60 @@
                     {{ recipe.duration }} דקות
                   </span>
                 </div>
-                
-                <!-- Progress Bar -->
+               
+                <!-- Recipe Progress Bar with Steps Info -->
                 <div class="recipe-progress">
+                  <div class="progress-header">
+                    <span class="progress-label">התקדמות בישול</span>
+                    <span class="progress-percentage">{{ recipe.progress || 0 }}%</span>
+                  </div>
+                 
                   <div class="progress">
-                    <div 
-                      class="progress-bar" 
-                      :class="recipe.progress === 100 ? 'bg-success' : 'bg-primary'"
-                      role="progressbar" 
+                    <div
+                      class="progress-bar"
+                      :class="getProgressBarClass(recipe.progress)"
+                      role="progressbar"
                       :style="{ width: (recipe.progress || 0) + '%' }"
-                      :aria-valuenow="recipe.progress || 0" 
-                      aria-valuemin="0" 
+                      :aria-valuenow="recipe.progress || 0"
+                      aria-valuemin="0"
                       aria-valuemax="100">
                     </div>
                   </div>
-                  <small class="progress-text">{{ recipe.progress || 0 }}% הושלם</small>
+                 
+                  <!-- Steps Progress -->
+                  <div v-if="recipe.steps_info" class="steps-progress">
+                    <small class="steps-text">
+                      <i class="fas fa-tasks"></i>
+                      {{ recipe.steps_info.completed }} / {{ recipe.steps_info.total }} שלבים הושלמו
+                    </small>
+                  </div>
+                 
+                  <!-- Started Indicator -->
+                  <div v-if="recipe.progress > 0 && recipe.progress < 100" class="started-indicator">
+                    <i class="fas fa-play-circle text-primary"></i>
+                    <small class="text-primary">בתהליך הכנה</small>
+                  </div>
                 </div>
-                
+               
                 <!-- Action Buttons -->
                 <div class="recipe-actions">
-                  <button 
+                  <button
                     @click="startCooking(recipe.recipeId)"
                     class="btn btn-primary btn-sm"
-                    :class="{ 'btn-success': recipe.progress === 100 }">
-                    <i class="fas fa-play"></i>
-                    {{ recipe.progress === 100 ? 'הושלם' : 'התחל בישול' }}
+                    :class="getActionButtonClass(recipe.progress)">
+                    <i :class="getActionButtonIcon(recipe.progress)"></i>
+                    {{ getActionButtonText(recipe.progress) }}
                   </button>
-                  
+                 
                   <div class="position-controls">
-                    <button 
+                    <button
                         @click="moveRecipeUp(index)"
                         :disabled="index === 0"
                         class="icon-button"
                         title="העבר למעלה">
                         ⬆️
                     </button>
-                    <button 
+                    <button
                         @click="moveRecipeDown(index)"
                         :disabled="index === sortedRecipes.length - 1"
                         class="icon-button"
@@ -203,7 +221,7 @@
                     </button>
                   </div>
 
-                  <button 
+                  <button
                     @click="removeRecipe(recipe.recipeId, index)"
                     class="icon-button text-danger"
                     title="הסר מתכנון">
@@ -211,15 +229,24 @@
                   </button>
 
                 </div>
-                
+               
                 <!-- Quick Actions -->
                 <div class="quick-actions mt-2">
-                  <button 
+                  <button
                     v-if="recipe.progress < 100"
                     @click="markAsCompleted(recipe.recipeId)"
                     class="btn btn-sm btn-outline-success">
                     <i class="fas fa-check"></i>
                     סמן כהושלם
+                  </button>
+                 
+                  <!-- Reset Progress Button -->
+                  <button
+                    v-if="recipe.progress > 0"
+                    @click="resetRecipeProgress(recipe.recipeId)"
+                    class="btn btn-sm btn-outline-warning">
+                    <i class="fas fa-undo"></i>
+                    איפוס התקדמות
                   </button>
                 </div>
               </div>
@@ -242,6 +269,10 @@
           <div class="summary-row">
             <span>מתכונים שהושלמו:</span>
             <strong>{{ completedRecipes }} / {{ totalRecipes }}</strong>
+          </div>
+          <div class="summary-row">
+            <span>מתכונים בתהליך:</span>
+            <strong>{{ recipesInProgress }}</strong>
           </div>
           <div class="summary-row">
             <span>התקדמות כללית:</span>
@@ -270,39 +301,95 @@ const mealPlanRecipes = computed(() => mealPlan.value.recipes || []);
 
 const totalRecipes = computed(() => mealPlanRecipes.value.length);
 
-const completedRecipes = computed(() => 
+const completedRecipes = computed(() =>
   mealPlanRecipes.value.filter(recipe => recipe.progress === 100).length
+);
+
+const recipesInProgress = computed(() =>
+  mealPlanRecipes.value.filter(recipe => recipe.progress > 0 && recipe.progress < 100).length
 );
 
 const overallProgress = computed(() => {
   if (totalRecipes.value === 0) return 0;
-  const totalProgress = mealPlanRecipes.value.reduce((sum, recipe) => 
+  const totalProgress = mealPlanRecipes.value.reduce((sum, recipe) =>
     sum + (recipe.progress || 0), 0
   );
   return totalProgress / totalRecipes.value;
 });
 
-const totalCookingTime = computed(() => 
+const totalCookingTime = computed(() =>
   mealPlanRecipes.value.reduce((sum, recipe) => sum + (recipe.duration || 0), 0)
 );
 
-const sortedRecipes = computed(() => 
+const sortedRecipes = computed(() =>
   [...mealPlanRecipes.value].sort((a, b) => (a.position || 0) - (b.position || 0))
 );
+
+// Helper methods for UI
+const getProgressBarClass = (progress) => {
+  if (progress === 100) return 'bg-success';
+  if (progress > 0) return 'bg-primary';
+  return 'bg-secondary';
+};
+
+const getActionButtonClass = (progress) => {
+  if (progress === 100) return 'btn-success';
+  if (progress > 0) return 'btn-warning';
+  return 'btn-primary';
+};
+
+const getActionButtonIcon = (progress) => {
+  if (progress === 100) return 'fas fa-check';
+  if (progress > 0) return 'fas fa-play';
+  return 'fas fa-play';
+};
+
+const getActionButtonText = (progress) => {
+  if (progress === 100) return 'הושלם';
+  if (progress > 0) return 'המשך בישול';
+  return 'התחל בישול';
+};
+
+// Load recipe progress from localStorage
+const loadRecipeProgress = (recipeId) => {
+  try {
+    const cached = localStorage.getItem(`global_recipe_progress_${recipeId}`);
+    if (cached) {
+      const progressData = JSON.parse(cached);
+      return {
+        progress: progressData.progress || 0,
+        steps_info: {
+          completed: progressData.completedSteps || 0,
+          total: progressData.totalSteps || 0
+        }
+      };
+    }
+  } catch (err) {
+    console.error('שגיאה בטעינת התקדמות מתכון:', err);
+  }
+  return { progress: 0, steps_info: null };
+};
 
 // Methods
 const loadMealPlan = async () => {
   try {
     loading.value = true;
     error.value = null;
-    
+   
     const response = await axios.get('/users/me/meal-plan');
     mealPlan.value = response.data;
-    
+   
+    // Load progress for each recipe from localStorage
+    mealPlan.value.recipes.forEach(recipe => {
+      const progressData = loadRecipeProgress(recipe.recipeId);
+      recipe.progress = progressData.progress;
+      recipe.steps_info = progressData.steps_info;
+    });
+   
     console.log('✔️ תכנון ארוחה נטען בהצלחה:', response.data);
   } catch (err) {
     console.error('❌ שגיאה בטעינת תכנון ארוחה:', err);
-    
+   
     if (err.response?.status === 401) {
       error.value = 'נדרשת התחברות למערכת כדי לצפות בתכנון הארוחה';
     } else {
@@ -317,14 +404,14 @@ const removeRecipe = async (recipeId, index) => {
   if (!confirm('האם אתה בטוח שברצונך להסיר מתכון זה מתכנון הארוחה?')) {
     return;
   }
-  
+ 
   try {
     await axios.delete(`/users/me/meal-plan/${recipeId}`);
-    
+   
     // Remove from local state
     mealPlan.value.recipes.splice(index, 1);
     window.dispatchEvent(new CustomEvent('mealPlanUpdated'));
-    
+   
     console.log(`✔️ מתכון ${recipeId} הוסר מתכנון הארוחה`);
   } catch (err) {
     console.error('❌ שגיאה בהסרת מתכון:', err);
@@ -336,11 +423,11 @@ const clearAllRecipes = async () => {
   if (!confirm('האם אתה בטוח שברצונך לנקות את כל תכנון הארוחה? פעולה זו לא ניתנת לביטול.')) {
     return;
   }
-  
+ 
   try {
     clearing.value = true;
     await axios.delete('/users/me/meal-plan');
-    
+   
     mealPlan.value.recipes = [];
     window.dispatchEvent(new CustomEvent('mealPlanUpdated'));
     console.log('✔️ תכנון הארוחה נוקה בהצלחה');
@@ -354,19 +441,19 @@ const clearAllRecipes = async () => {
 
 const moveRecipeUp = async (index) => {
   if (index === 0) return;
-  
+ 
   const recipe = sortedRecipes.value[index];
   const newPosition = Math.max(0, recipe.position - 1);
-  
+ 
   await updateRecipePosition(recipe.recipeId, newPosition);
 };
 
 const moveRecipeDown = async (index) => {
   if (index === sortedRecipes.value.length - 1) return;
-  
+ 
   const recipe = sortedRecipes.value[index];
   const newPosition = recipe.position + 1;
-  
+ 
   await updateRecipePosition(recipe.recipeId, newPosition);
 };
 
@@ -375,7 +462,7 @@ const updateRecipePosition = async (recipeId, newPosition) => {
     await axios.put(`/users/me/meal-plan/${recipeId}`, {
       position: newPosition
     });
-    
+   
     // Update local state
     const recipe = mealPlan.value.recipes.find(r => r.recipeId === recipeId);
     if (recipe) {
@@ -392,17 +479,56 @@ const updateRecipePosition = async (recipeId, newPosition) => {
 const markAsCompleted = async (recipeId) => {
   try {
     await axios.post(`/users/me/meal-plan/${recipeId}/complete`);
-    
+   
     // Update local state
     const recipe = mealPlan.value.recipes.find(r => r.recipeId === recipeId);
     if (recipe) {
       recipe.progress = 100;
+      if (recipe.steps_info) {
+        recipe.steps_info.completed = recipe.steps_info.total;
+      }
     }
+   
+    // Update localStorage
+    const globalProgressData = {
+      recipeId: recipeId,
+      progress: 100,
+      completedSteps: recipe.steps_info?.total || 0,
+      totalSteps: recipe.steps_info?.total || 0,
+      lastUpdated: Date.now()
+    };
+    localStorage.setItem(`global_recipe_progress_${recipeId}`, JSON.stringify(globalProgressData));
+   
     window.dispatchEvent(new CustomEvent('mealPlanUpdated'));
     console.log(`✔️ מתכון ${recipeId} סומן כהושלם`);
   } catch (err) {
     console.error('❌ שגיאה בסימון מתכון כהושלם:', err);
     alert('אירעה שגיאה בסימון המתכון כהושלם');
+  }
+};
+
+const resetRecipeProgress = (recipeId) => {
+  if (!confirm('האם אתה בטוח שברצונך לאפס את ההתקדמות של המתכון?')) {
+    return;
+  }
+ 
+  try {
+    // Clear progress from localStorage
+    localStorage.removeItem(`recipe_progress_${recipeId}`);
+    localStorage.removeItem(`recipe_servings_${recipeId}`);
+    localStorage.removeItem(`global_recipe_progress_${recipeId}`);
+   
+    // Update local state
+    const recipe = mealPlan.value.recipes.find(r => r.recipeId === recipeId);
+    if (recipe) {
+      recipe.progress = 0;
+      recipe.steps_info = null;
+    }
+   
+    console.log(`✔️ התקדמות מתכון ${recipeId} אופסה`);
+  } catch (err) {
+    console.error('❌ שגיאה באיפוס התקדמות מתכון:', err);
+    alert('אירעה שגיאה באיפוס ההתקדמות');
   }
 };
 
@@ -414,9 +540,14 @@ const refreshMealPlan = () => {
   loadMealPlan();
 };
 
-// Lifecycle
+// Listen for meal plan updates
 onMounted(() => {
   loadMealPlan();
+ 
+  // Listen for progress updates from cooking page
+  window.addEventListener('mealPlanUpdated', () => {
+    loadMealPlan();
+  });
 });
 </script>
 
@@ -558,7 +689,7 @@ onMounted(() => {
   position: absolute;
   top: 10px;
   right: 10px;
-  background: #42b983(52, 152, 219, 0.9);
+  background: rgba(66, 185, 131, 0.9);
   color: white;
   padding: 5px 10px;
   border-radius: 15px;
@@ -639,6 +770,25 @@ onMounted(() => {
   margin-bottom: 1rem;
 }
 
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.progress-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.progress-percentage {
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: #42b983;
+}
+
 .recipe-progress .progress {
   height: 8px;
   border-radius: 4px;
@@ -651,9 +801,26 @@ onMounted(() => {
   transition: width 0.6s ease;
 }
 
-.progress-text {
+.steps-progress {
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.steps-text {
   color: #6c757d;
   font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.started-indicator {
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .recipe-actions {
@@ -703,6 +870,7 @@ onMounted(() => {
 .quick-actions {
   display: flex;
   gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .quick-actions .btn {
@@ -760,47 +928,55 @@ onMounted(() => {
   .meal-plan-container {
     padding: 1rem;
   }
-  
+ 
   .page-title {
     font-size: 2rem;
   }
-  
+ 
   .meal-plan-grid {
     grid-template-columns: 1fr;
     gap: 1rem;
   }
-  
+ 
   .recipe-actions {
     flex-direction: column;
     align-items: stretch;
   }
-  
+ 
   .recipe-actions .btn {
     width: 100%;
     margin-bottom: 0.5rem;
   }
-  
+ 
   .position-controls {
     flex-direction: row;
     justify-content: center;
   }
-  
+ 
   .stats-bar .row {
     text-align: center;
   }
-  
+ 
   .stat-number {
     font-size: 2rem;
   }
-  
+ 
   .action-buttons {
     flex-direction: column;
     align-items: stretch;
   }
-  
+ 
   .action-buttons .btn {
     width: 100%;
     margin-bottom: 0.5rem;
+  }
+ 
+  .quick-actions {
+    flex-direction: column;
+  }
+ 
+  .quick-actions .btn {
+    width: 100%;
   }
 }
 

@@ -280,6 +280,7 @@ router.get('/me/family-recipes', async (req, res, next) => {
  * Start cooking a recipe - get detailed preparation info
  */
 router.get("/me/recipes/:id/startcooking", async (req, res, next) => {
+  console.log("✔️ נכנס לנתיב של startcooking");
   try {
     const user_id = req.session.user_id;
     if (!user_id) {
